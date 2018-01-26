@@ -1,0 +1,9 @@
+logs/
+db/
+.directory
+.vscode
+.idea
+*.~sql
+*.~cod
+*.bak
+*.exe

@@ -1,0 +1,54 @@
+<div>You are at register</div>
+<br><br>
+
+<div class="container">
+    <form action="/register" method="POST">
+        {{% .csrfField %}}
+        <div class="form-group row">
+            <label for="username" class="col-sm-2 col-form-label">Username:</label>
+            <div class="col-sm-6">
+                <input type="text" class="form-control" name="username" placeholder="Username">
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="password" class="col-sm-2 col-form-label">Password:</label>
+            <div class="col-sm-6">
+                <input type="password" class="form-control" name="password">
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="confirm_password" class="col-sm-2 col-form-label">Confirm Password:</label>
+            <div class="col-sm-6">
+                <input type="password" class="form-control" name="confirm_password">
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="name" class="col-sm-2 col-form-label">Name:</label>
+            <div class="col-sm-6">
+                <input type="text" class="form-control" name="name" placeholder="Name">
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="surname" class="col-sm-2 col-form-label">Surname:</label>
+            <div class="col-sm-6">
+                <input type="text" class="form-control" name="surname" placeholder="Surname">
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="email" class="col-sm-2 col-form-label">E-mail:</label>
+            <div class="col-sm-6">
+                <input type="email" class="form-control" name="email" placeholder="Email">
+            </div>
+        </div>
+        <div class="form-group row">
+            <input type="submit" value="Register"><br>
+        </div>
+    </form>
+</div>
+
+{{% if .m.Err %}}
+<div style="color: red;">{{% .m.SErr %}}</div>
+{{% end %}}
+
+<br><br>
+<a href="/">index</a>

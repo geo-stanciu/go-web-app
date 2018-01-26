@@ -1,0 +1,28 @@
+<div>You are at login</div>
+<br><br> {{% if not .Session.LoggedIn %}}
+<div class="container">
+    <form action="/login" method="POST">
+        {{% .csrfField %}}
+        <div class="form-group row">
+            <label for="username" class="col-sm-2 col-form-label">Username:</label>
+            <div class="col-sm-6">
+                <input type="text" class="form-control" name="username" placeholder="Username">
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="password" class="col-sm-2 col-form-label">Password:</label>
+            <div class="col-sm-6">
+                <input type="password" class="form-control" name="password">
+            </div>
+        </div>
+        <div class="form-group row">
+            <input type="submit" value="Login">
+        </div>
+    </form>
+</div>
+{{% end %}} {{% if .m.Err %}}
+<div style="color: red;">{{% .m.SErr %}}</div>
+{{% end %}}
+
+<br><br>
+<a href="/register">Register</a>

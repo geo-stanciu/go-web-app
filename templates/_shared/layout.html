@@ -1,0 +1,71 @@
+{{% define "layout" %}}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{% .m.Title %}} - {{% .m.AppName %}} - {{% .m.Version %}}</title>
+
+    <meta name="csrf.Token" content="{{% .csrf %}}">
+
+    <script src="/js/cookies-v1.2.3.min.js"></script>
+
+    <script src="/js/ajax-utils.js?v={{% .m.Version %}}"></script>
+    <script src="/js/date-utils.js?v={{% .m.Version %}}"></script>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inknut+Antiqua:700|Roboto:400,500">
+    <link rel="stylesheet" href="/css/main.css?v={{% .m.Version %}}">
+    <link rel="stylesheet" href="/css/index-main.css?v={{% .m.Version %}}">
+    <link rel="stylesheet" href="/css/index-mq-600-plus.css?v={{% .m.Version %}}" media="(min-width=600px)">
+</head>
+
+<body>
+    <header>
+        <h1>Test Logo</h1>
+        <nav></nav>
+        <div>
+            {{% if .m.Session.LoggedIn %}}
+            <div class="LblUser">{{% .m.Session.User.Username %}} <a href="/logout">logout</a></div>
+            {{% end %}}
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            {{% template "content" . %}}
+        </div>
+    </main>
+
+    <article>
+        <section></section>
+        <section></section>
+        <section></section>
+    </article>
+
+    <article>
+        <section></section>
+        <section></section>
+        <section></section>
+    </article>
+
+    <article>
+        <section></section>
+        <section></section>
+        <section></section>
+    </article>
+
+    <footer></footer>
+</body>
+
+</html>
+{{% end %}}

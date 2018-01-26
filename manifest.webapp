@@ -1,0 +1,12 @@
+{
+  "name": "Go Website Example",
+  "description": "Who cares",
+  "developer": {
+    "name": "Me",
+    "url": "http://nowhere.org"
+  },
+  "default_locale": "en",
+  "web_accessible_resources": [
+    "/js/jquery.min.map"
+  ]
+}

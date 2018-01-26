@@ -1,0 +1,14 @@
+prefix=/devel/target/1.0
+exec_prefix=${prefix}
+libdir=D:/app/geo/virtual/product/12.2.0/dbhome_1/oci/lib/msvc
+includedir=D:/app/geo/virtual/product/12.2.0/dbhome_1/oci/include
+
+glib_genmarshal=glib-genmarshal
+gobject_query=gobject-query
+glib_mkenums=glib-mkenums
+
+Name: oci8
+Description: oci8 library
+Libs: -L${libdir} -loci
+Cflags: -I${includedir}
+Version: 11.2
