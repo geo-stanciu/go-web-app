@@ -392,40 +392,62 @@ func (HomeController) ChangePassword(w http.ResponseWriter, r *http.Request, res
 func (HomeController) GetExchangeRates(w http.ResponseWriter, r *http.Request, res *ResponseHelper) (*models.ExchangeRatesResponseModel, error) {
 	var lres models.ExchangeRatesResponseModel
 	var date string
+	var date1 string
+	var date2 string
+	var pq *utils.PreparedQuery
 
-	if val, ok := r.Form["date"]; ok {
+	if val, ok := r.Form["date"]; ok && utils.IsISODate(val[0]) {
 		date = val[0]
 	}
 
-	if !utils.IsISODate(date) {
-		date = ""
+	if val, ok := r.Form["date1"]; ok && utils.IsISODate(val[0]) {
+		date1 = val[0]
 	}
 
-	if len(date) == 0 {
-		dt := time.Now()
-		date = utils.Date2string(dt, utils.ISODate)
+	if val, ok := r.Form["date2"]; ok && utils.IsISODate(val[0]) {
+		date2 = val[0]
 	}
 
-	pq := dbUtils.PQuery(`
-	    WITH c_rates AS (
-			SELECT currency_id, max(exchange_date) max_data
-			  FROM exchange_rate
-	         WHERE exchange_date <= DATE ?
-			 GROUP BY currency_id
-		)
-		SELECT rc.currency AS reference_currency,
-			   c.currency,
-			   r.exchange_date,
-		       r.rate
-	      FROM exchange_rate r
-		  JOIN currency c ON (r.currency_id = c.currency_id)
-		  JOIN currency rc ON (r.reference_currency_id = rc.currency_id)
-		  JOIN c_rates cr ON (
-			r.currency_id = cr.currency_id AND
-			r.exchange_date = cr.max_data
-		  )
-	     ORDER BY c.currency, r.exchange_date
-	`, date)
+	if len(date1) == 0 || len(date2) == 0 {
+		if len(date) == 0 {
+			dt := time.Now()
+			date = utils.Date2string(dt, utils.ISODate)
+		}
+
+		pq = dbUtils.PQuery(`
+			WITH c_rates AS (
+				SELECT currency_id, max(exchange_date) max_data
+				FROM exchange_rate
+				WHERE exchange_date <= DATE ?
+				GROUP BY currency_id
+			)
+			SELECT rc.currency AS reference_currency,
+				c.currency,
+				r.exchange_date,
+				r.rate
+			FROM exchange_rate r
+			JOIN currency c ON (r.currency_id = c.currency_id)
+			JOIN currency rc ON (r.reference_currency_id = rc.currency_id)
+			JOIN c_rates cr ON (
+				r.currency_id = cr.currency_id AND
+				r.exchange_date = cr.max_data
+			)
+			ORDER BY c.currency, r.exchange_date
+		`, date)
+	} else {
+		pq = dbUtils.PQuery(`
+			SELECT rc.currency AS reference_currency,
+				c.currency,
+				r.exchange_date,
+				r.rate
+			FROM exchange_rate r
+			JOIN currency c ON (r.currency_id = c.currency_id)
+			JOIN currency rc ON (r.reference_currency_id = rc.currency_id)
+			WHERE r.exchange_date BETWEEN DATE ? and DATE ?
+			ORDER BY r.exchange_date, c.currency
+		`, date1,
+			date2)
+	}
 
 	var err error
 	err = dbUtils.ForEachRow(pq, func(row *sql.Rows, sc *utils.SQLScan) error {

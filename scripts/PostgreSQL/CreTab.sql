@@ -22,6 +22,8 @@ CREATE TABLE IF NOT EXISTS exchange_rate (
         references currency (currency_id)
 );
 
+create index idx_exchange_rate_date on exchange_rate (exchange_date);
+
 CREATE TABLE IF NOT EXISTS audit_log (
     audit_log_id   bigserial primary key,
     log_source     varchar(64) not null,

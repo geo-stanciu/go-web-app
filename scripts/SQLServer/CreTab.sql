@@ -18,6 +18,8 @@ create table exchange_rate (
         references currency (currency_id)
 );
 
+create index idx_exchange_rate_date on exchange_rate (exchange_date);
+
 create table audit_log (
     audit_log_id   bigint identity(1,1) PRIMARY KEY,
     log_source     varchar(64) not null,

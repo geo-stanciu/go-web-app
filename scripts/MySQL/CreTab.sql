@@ -16,6 +16,8 @@ create table if not exists exchange_rate (
         references currency (currency_id)
 );
 
+create index idx_exchange_rate_date on exchange_rate (exchange_date);
+
 create table if not exists audit_log (
     audit_log_id   bigint auto_increment PRIMARY KEY,
     log_source     varchar(64) not null,

@@ -18,6 +18,8 @@ create table exchange_rate (
         references currency (currency_id)
 );
 
+create index idx_exchange_rate_date on exchange_rate (exchange_date);
+
 create sequence s$audit_log nocache start with 1;
 
 create table audit_log (
