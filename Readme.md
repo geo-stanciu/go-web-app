@@ -10,33 +10,35 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 As a first step after cloning this repository, you might need to run the following command (this downloads the needed dependencies):
 
-```
+```bash
 go get -d
 ```
 
 ## TODO
+
 - Password rules for register + change password
-    - do not use common words
+  - do not use common words
 
 - Menu allocation on roles.
 
 ## Features
+
 - Requests, roles and membership menu distribution initialized from initialize-database.go.
 - Requests and controller + action are identified in the db.
   Calls to the propper action from a certain controller are made automatically.
 - Auth. cookies are encrypted.
 - Password rules:
-    - do not use the last x passwords
-    - use at least x characters
-    - use at least x letters
-    - use at least x numbers
-    - use at least x uppercase
-    - use at least x non alphanumerics
-    - param for validity period
-    - set the date when the password expires at password creation
-    - do not use repetitive groups of letters
-    - must not contain the username
-    - redirect user to change his password if password is temporary
+  - do not use the last x passwords
+  - use at least x characters
+  - use at least x letters
+  - use at least x numbers
+  - use at least x uppercase
+  - use at least x non alphanumerics
+  - param for validity period
+  - set the date when the password expires at password creation
+  - do not use repetitive groups of letters
+  - must not contain the username
+  - redirect user to change his password if password is temporary
 - Anti XRSF
 - Router paths (Named here "Requests". See initialize-requests.go)
 - Acces control (see initialize-database.go and initialize-access-rules.go)
@@ -44,6 +46,7 @@ go get -d
 ## Connect Strings Examples
 
 ### PostgreSQL
+
 ```xml
 <database>
   <db-type>postgres</db-type>
@@ -52,6 +55,7 @@ go get -d
 ```
 
 ### MySql
+
 ```xml
 <database>
   <db-type>mysql</db-type>
@@ -60,13 +64,16 @@ go get -d
 ```
 
 ### Oracle12c
+
 ```xml
 <database>
   <db-type>oci8</db-type>
   <db-url>geo/geo@db1</db-url>
 </database>
 ```
+
 ### Oracle11g
+
 ```xml
 <database>
   <db-type>oracle11g</db-type>
@@ -75,6 +82,7 @@ go get -d
 ```
 
 ### Sql Server
+
 ```xml
 <database>
   <db-type>mssql</db-type>
@@ -85,6 +93,7 @@ go get -d
 ## Needs
 
 Uses the following sql pachages:
+
 - "github.com/denisenkom/go-mssqldb"
 - "github.com/go-sql-driver/mysql"
 - "github.com/lib/pq"
