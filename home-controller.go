@@ -47,14 +47,14 @@ func (HomeController) Login(w http.ResponseWriter, r *http.Request, res *Respons
 
 		if len(user) == 0 || len(pass) == 0 {
 			throwErr2Client = false
-			lres, err = loginerr(&lres, err, user, throwErr2Client)
+			lres, err = loginerr(&lres, err, user, ip, throwErr2Client)
 			return &lres, err
 		}
 
 		success, err := ValidateUserPassword(user, pass, ip)
 		if err != nil || (success != ValidationOK && success != ValidationTemporaryPassword) {
 			throwErr2Client = false
-			lres, err = loginerr(&lres, err, user, throwErr2Client)
+			lres, err = loginerr(&lres, err, user, ip, throwErr2Client)
 			return &lres, err
 		}
 
@@ -73,13 +73,13 @@ func (HomeController) Login(w http.ResponseWriter, r *http.Request, res *Respons
 
 		err = db.QueryRow(pq.Query, pq.Args...).Scan(&name, &surname)
 		if err != nil {
-			lres, err = loginerr(&lres, err, user, throwErr2Client)
+			lres, err = loginerr(&lres, err, user, ip, throwErr2Client)
 			return &lres, err
 		}
 
 		sessionData, err = createSession(w, r, sessionData.Lang, user, name, surname, lres.TemporaryPassword)
 		if err != nil {
-			lres, err = loginerr(&lres, err, user, throwErr2Client)
+			lres, err = loginerr(&lres, err, user, ip, throwErr2Client)
 			return &lres, err
 		}
 
@@ -96,7 +96,7 @@ func (HomeController) Login(w http.ResponseWriter, r *http.Request, res *Respons
 
 		_, err = dbUtils.Exec(pq)
 		if err != nil {
-			lres, err = loginerr(&lres, err, user, throwErr2Client)
+			lres, err = loginerr(&lres, err, user, ip, throwErr2Client)
 			return &lres, err
 		}
 	}
@@ -113,6 +113,7 @@ func (HomeController) Login(w http.ResponseWriter, r *http.Request, res *Respons
 func loginerr(lres *models.LoginResponseModel,
 	errLogin error,
 	user string,
+	ip string,
 	throwErr2Client bool) (models.LoginResponseModel, error) {
 
 	err := errLogin
@@ -131,6 +132,7 @@ func loginerr(lres *models.LoginResponseModel,
 
 	audit.Log(err, "login", lres.SError,
 		"user", user,
+		"ip", ip,
 		"Temporary Password", lres.TemporaryPassword,
 	)
 

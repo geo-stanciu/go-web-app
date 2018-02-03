@@ -92,6 +92,7 @@ func main() {
 
 	audit.SetLogger(appName+"/"+appVersion, log, dbUtils)
 	audit.SetWaitGroup(&wg)
+	defer audit.Close()
 
 	mw := io.MultiWriter(os.Stdout, audit)
 	log.Out = mw
