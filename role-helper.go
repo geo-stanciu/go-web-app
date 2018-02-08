@@ -21,7 +21,7 @@ var membershipRoleLock sync.RWMutex
 func (r *MembershipRole) Exists() (bool, error) {
 	found := false
 
-	pq := dbUtils.PQuery(`
+	pq := dbutl.PQuery(`
 	    SELECT CASE WHEN EXISTS (
 	        SELECT 1
 	          FROM role
@@ -43,14 +43,14 @@ func (r *MembershipRole) GetByName(role string) error {
 	r.Lock()
 	defer r.Unlock()
 
-	pq := dbUtils.PQuery(`
+	pq := dbutl.PQuery(`
 	    SELECT role_id,
 	           role
 	      FROM role
 	     WHERE loweredrole = lower(?)
 	`, role)
 
-	err := dbUtils.RunQueryTx(r.tx, pq, r)
+	err := dbutl.RunQueryTx(r.tx, pq, r)
 
 	switch {
 	case err == sql.ErrNoRows:
@@ -67,14 +67,14 @@ func (r *MembershipRole) GetByID(roleID int) error {
 	r.Lock()
 	defer r.Unlock()
 
-	pq := dbUtils.PQuery(`
+	pq := dbutl.PQuery(`
 	    SELECT role_id,
 	           role
 	      FROM role
 	     WHERE role_id = ?
 	`, roleID)
 
-	err := dbUtils.RunQueryTx(r.tx, pq, r)
+	err := dbutl.RunQueryTx(r.tx, pq, r)
 
 	switch {
 	case err == sql.ErrNoRows:
@@ -93,7 +93,7 @@ func (r *MembershipRole) testSave() error {
 
 	var found bool
 
-	pq := dbUtils.PQuery(`
+	pq := dbutl.PQuery(`
 	    SELECT CASE WHEN EXISTS (
 	        SELECT 1
 	          FROM role
@@ -127,16 +127,16 @@ func (r *MembershipRole) Save() error {
 	}
 
 	if r.RoleID <= 0 {
-		pq := dbUtils.PQuery(`
+		pq := dbutl.PQuery(`
 		    INSERT INTO role (role, loweredrole) VALUES (?, lower(?))
 		`, r.Rolename, r.Rolename)
 
-		_, err = dbUtils.ExecTx(r.tx, pq)
+		_, err = dbutl.ExecTx(r.tx, pq)
 		if err != nil {
 			return err
 		}
 
-		pq = dbUtils.PQuery(`
+		pq = dbutl.PQuery(`
 			SELECT role_id FROM role WHERE loweredrole = lower(?)
 		`, r.Rolename)
 
@@ -157,7 +157,7 @@ func (r *MembershipRole) Save() error {
 			return err
 		}
 
-		pq := dbUtils.PQuery(`
+		pq := dbutl.PQuery(`
 			UPDATE role
 			   SET role = ?,
 		           loweredrole = lower(?)
@@ -166,7 +166,7 @@ func (r *MembershipRole) Save() error {
 			r.Rolename,
 			r.RoleID)
 
-		_, err = dbUtils.ExecTx(r.tx, pq)
+		_, err = dbutl.ExecTx(r.tx, pq)
 		if err != nil {
 			return err
 		}
@@ -186,7 +186,7 @@ func (r *MembershipRole) HasMember(user string) (bool, error) {
 
 	dt := time.Now().UTC()
 
-	pq := dbUtils.PQuery(`
+	pq := dbutl.PQuery(`
 	    SELECT CASE WHEN EXISTS (
 	        SELECT 1
 	          FROM user_role ur
@@ -219,7 +219,7 @@ func (r *MembershipRole) HasMemberID(userID int) (bool, error) {
 
 	dt := time.Now().UTC()
 
-	pq := dbUtils.PQuery(`
+	pq := dbutl.PQuery(`
 	    SELECT CASE WHEN EXISTS (
 	        SELECT 1
 	          FROM user_role ur
@@ -248,7 +248,7 @@ func IsUserInRole(user string, role string) (bool, error) {
 
 	dt := time.Now().UTC()
 
-	pq := dbUtils.PQuery(`
+	pq := dbutl.PQuery(`
 	    SELECT CASE WHEN EXISTS (
 	        SELECT 1
 	          FROM user_role ur

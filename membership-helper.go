@@ -42,7 +42,7 @@ var membershipUserLock sync.RWMutex
 func (u *MembershipUser) Exists(user string) (bool, error) {
 	found := false
 
-	pq := dbUtils.PQuery(`
+	pq := dbutl.PQuery(`
 	    SELECT CASE WHEN EXISTS (
 	        SELECT 1
 	          FROM "user"
@@ -64,7 +64,7 @@ func (u *MembershipUser) GetByName(user string) error {
 	u.Lock()
 	defer u.Unlock()
 
-	pq := dbUtils.PQuery(`
+	pq := dbutl.PQuery(`
 	    SELECT user_id,
 	           username,
 	           name,
@@ -74,7 +74,7 @@ func (u *MembershipUser) GetByName(user string) error {
 	     WHERE loweredusername = lower(?)
 	`, user)
 
-	err := dbUtils.RunQueryTx(u.tx, pq, u)
+	err := dbutl.RunQueryTx(u.tx, pq, u)
 
 	switch {
 	case err == sql.ErrNoRows:
@@ -91,7 +91,7 @@ func (u *MembershipUser) GetByID(userID int) error {
 	u.Lock()
 	defer u.Unlock()
 
-	pq := dbUtils.PQuery(`
+	pq := dbutl.PQuery(`
 	    SELECT user_id,
 	        username,
 	        name,
@@ -101,7 +101,7 @@ func (u *MembershipUser) GetByID(userID int) error {
 	    WHERE user_id = ?
 	`, userID)
 
-	err := dbUtils.RunQueryTx(u.tx, pq, u)
+	err := dbutl.RunQueryTx(u.tx, pq, u)
 
 	switch {
 	case err == sql.ErrNoRows:
@@ -122,7 +122,7 @@ func (u *MembershipUser) testSave() error {
 		return fmt.Errorf("cannot create user with empty password")
 	}
 
-	pq := dbUtils.PQuery(`
+	pq := dbutl.PQuery(`
 	    SELECT CASE WHEN EXISTS (
 	        SELECT 1
 	          FROM "user"
@@ -159,7 +159,7 @@ func (u *MembershipUser) Save() error {
 	dt := time.Now().UTC()
 
 	if u.UserID <= 0 {
-		pq := dbUtils.PQuery(`
+		pq := dbutl.PQuery(`
 		    INSERT INTO "user" (
 		        username,
 		        loweredusername,
@@ -180,12 +180,12 @@ func (u *MembershipUser) Save() error {
 			dt,
 			dt)
 
-		_, err = dbUtils.ExecTx(u.tx, pq)
+		_, err = dbutl.ExecTx(u.tx, pq)
 		if err != nil {
 			return err
 		}
 
-		pq = dbUtils.PQuery(`
+		pq = dbutl.PQuery(`
 		    SELECT user_id FROM "user" WHERE loweredusername = ?
 		`, strings.ToLower(u.Username))
 
@@ -218,7 +218,7 @@ func (u *MembershipUser) Save() error {
 		dt := time.Now().UTC()
 
 		if !u.Equals(&old) {
-			pq := dbUtils.PQuery(`
+			pq := dbutl.PQuery(`
 			    UPDATE "user"
 			       SET username     = ?,
 			           loweredusername = ?,
@@ -237,7 +237,7 @@ func (u *MembershipUser) Save() error {
 				dt,
 				u.UserID)
 
-			_, err = dbUtils.ExecTx(u.tx, pq)
+			_, err = dbutl.ExecTx(u.tx, pq)
 			if err != nil {
 				return err
 			}
@@ -263,7 +263,7 @@ func (u *MembershipUser) Activate() error {
 
 	dt := time.Now().UTC()
 
-	pq := dbUtils.PQuery(`
+	pq := dbutl.PQuery(`
 		UPDATE "user"
 		   SET activated       = ?,
 			   activation_time = ?
@@ -274,7 +274,7 @@ func (u *MembershipUser) Activate() error {
 		u.UserID,
 		0)
 
-	_, err := dbUtils.ExecTx(u.tx, pq)
+	_, err := dbutl.ExecTx(u.tx, pq)
 	if err != nil {
 		return err
 	}
@@ -291,7 +291,7 @@ func (u *MembershipUser) GetUserRoles() ([]*MembershipRole, error) {
 
 	dt := time.Now().UTC()
 
-	pq := dbUtils.PQuery(`
+	pq := dbutl.PQuery(`
 	    SELECT r.role_id,
 	           r.role
 	      FROM user_role ur
@@ -305,9 +305,9 @@ func (u *MembershipUser) GetUserRoles() ([]*MembershipRole, error) {
 		dt)
 
 	var err error
-	err = dbUtils.ForEachRowTx(u.tx, pq, func(row *sql.Rows, sc *utils.SQLScan) error {
+	err = dbutl.ForEachRowTx(u.tx, pq, func(row *sql.Rows, sc *utils.SQLScan) error {
 		r := MembershipRole{tx: u.tx}
-		err = sc.Scan(dbUtils, row, &r)
+		err = sc.Scan(dbutl, row, &r)
 		if err != nil {
 			return err
 		}
@@ -345,7 +345,7 @@ func (u *MembershipUser) AddToRole(role string) error {
 
 	dt := time.Now().UTC()
 
-	pq := dbUtils.PQuery(`
+	pq := dbutl.PQuery(`
 	    INSERT INTO user_role (
 	        user_id,
 	        role_id,
@@ -356,7 +356,7 @@ func (u *MembershipUser) AddToRole(role string) error {
 		r.RoleID,
 		dt)
 
-	_, err = dbUtils.ExecTx(u.tx, pq)
+	_, err = dbutl.ExecTx(u.tx, pq)
 	if err != nil {
 		return err
 	}
@@ -388,7 +388,7 @@ func (u *MembershipUser) RemoveFromRole(role string) error {
 
 	dt := time.Now().UTC()
 
-	pq := dbUtils.PQuery(`
+	pq := dbutl.PQuery(`
 	    UPDATE user_role
 	       SET valid_until = ?
 	     WHERE user_id = ?
@@ -397,12 +397,12 @@ func (u *MembershipUser) RemoveFromRole(role string) error {
 		u.UserID,
 		r.RoleID)
 
-	_, err = dbUtils.ExecTx(u.tx, pq)
+	_, err = dbutl.ExecTx(u.tx, pq)
 	if err != nil {
 		return err
 	}
 
-	pq = dbUtils.PQuery(`
+	pq = dbutl.PQuery(`
 	    INSERT INTO user_role_history
 	    SELECT *
 	      FROM user_role
@@ -411,19 +411,19 @@ func (u *MembershipUser) RemoveFromRole(role string) error {
 	`, u.UserID,
 		r.RoleID)
 
-	_, err = dbUtils.ExecTx(u.tx, pq)
+	_, err = dbutl.ExecTx(u.tx, pq)
 	if err != nil {
 		return err
 	}
 
-	pq = dbUtils.PQuery(`
+	pq = dbutl.PQuery(`
 	    DELETE FROM user_role
 	     WHERE user_id = ?
 	       AND role_id = ?
 	`, u.UserID,
 		r.RoleID)
 
-	_, err = dbUtils.ExecTx(u.tx, pq)
+	_, err = dbutl.ExecTx(u.tx, pq)
 	if err != nil {
 		return err
 	}
@@ -443,7 +443,7 @@ func (u *MembershipUser) passwordAlreadyUsed() (bool, int, error) {
 	var hashedPassword string
 	var passwordSalt string
 
-	pq := dbUtils.PQuery(`
+	pq := dbutl.PQuery(`
 	    SELECT CASE
 	             WHEN password is null THEN
 	               '-'
@@ -464,7 +464,7 @@ func (u *MembershipUser) passwordAlreadyUsed() (bool, int, error) {
 		notRepeatPasswords)
 
 	var err error
-	err = dbUtils.ForEachRowTx(u.tx, pq, func(row *sql.Rows, sc *utils.SQLScan) error {
+	err = dbutl.ForEachRowTx(u.tx, pq, func(row *sql.Rows, sc *utils.SQLScan) error {
 		err = row.Scan(&hashedPassword, &passwordSalt)
 		if err != nil {
 			return err
@@ -574,7 +574,7 @@ func (u *MembershipUser) changePassword() error {
 
 	dt := time.Now().UTC()
 
-	pq := dbUtils.PQuery(`
+	pq := dbutl.PQuery(`
 	    UPDATE user_password
 	       SET valid_until = ?
 	     WHERE user_id = ?
@@ -585,7 +585,7 @@ func (u *MembershipUser) changePassword() error {
 		dt,
 		dt)
 
-	_, err = dbUtils.ExecTx(u.tx, pq)
+	_, err = dbutl.ExecTx(u.tx, pq)
 	if err != nil {
 		return err
 	}
@@ -593,7 +593,7 @@ func (u *MembershipUser) changePassword() error {
 	until := dt.Add(time.Duration(changeInterval*24) * time.Hour)
 
 	if changeInterval > 0 {
-		pq = dbUtils.PQuery(`
+		pq = dbutl.PQuery(`
 			INSERT INTO user_password (
 				user_id,
 				password,
@@ -608,9 +608,9 @@ func (u *MembershipUser) changePassword() error {
 			dt,
 			until)
 
-		_, err = dbUtils.ExecTx(u.tx, pq)
+		_, err = dbutl.ExecTx(u.tx, pq)
 	} else {
-		pq = dbUtils.PQuery(`
+		pq = dbutl.PQuery(`
 			INSERT INTO user_password (
 				user_id,
 				password,
@@ -623,21 +623,21 @@ func (u *MembershipUser) changePassword() error {
 			salt,
 			dt)
 
-		_, err = dbUtils.ExecTx(u.tx, pq)
+		_, err = dbutl.ExecTx(u.tx, pq)
 	}
 
 	if err != nil {
 		return err
 	}
 
-	pq = dbUtils.PQuery(`
+	pq = dbutl.PQuery(`
 	    UPDATE "user"
 	       SET last_password_change = ?
 	     WHERE user_id = ?
 	`, dt,
 		u.UserID)
 
-	_, err = dbUtils.ExecTx(u.tx, pq)
+	_, err = dbutl.ExecTx(u.tx, pq)
 	if err != nil {
 		return err
 	}
@@ -675,7 +675,7 @@ type validateUserUtil struct {
 func ValidateUserPassword(user string, pass string, ip string) (int, error) {
 	dt := time.Now().UTC()
 
-	pq := dbUtils.PQuery(`
+	pq := dbutl.PQuery(`
 	    SELECT u.user_id,
 	           CASE
 	             WHEN p.password is null THEN
@@ -703,7 +703,7 @@ func ValidateUserPassword(user string, pass string, ip string) (int, error) {
 		dt)
 
 	testUser := validateUserUtil{}
-	err := dbUtils.RunQuery(pq, &testUser)
+	err := dbutl.RunQuery(pq, &testUser)
 
 	switch {
 	case err == sql.ErrNoRows:
@@ -727,11 +727,11 @@ func ValidateUserPassword(user string, pass string, ip string) (int, error) {
 	hasIPs := false
 	foundIP := false
 
-	pq = dbUtils.PQuery(`
+	pq = dbutl.PQuery(`
 		SELECT ip FROM user_ip WHERE user_id = ?
 	`, testUser.UserID)
 
-	err = dbUtils.ForEachRow(pq, func(row *sql.Rows, sc *utils.SQLScan) error {
+	err = dbutl.ForEachRow(pq, func(row *sql.Rows, sc *utils.SQLScan) error {
 		hasIPs = true
 		var addr string
 		err = row.Scan(&addr)
@@ -797,7 +797,7 @@ func failedUserPasswordValidation(userID int, user string) {
 	}
 	defer tx.Rollback()
 
-	pq := dbUtils.PQuery(`
+	pq := dbutl.PQuery(`
 	    SELECT failed_password_atmpts,
 	           CASE
 	             WHEN first_failed_password is null then
@@ -811,7 +811,7 @@ func failedUserPasswordValidation(userID int, user string) {
 		userID)
 
 	failedPass := failedUserPassword{}
-	err = dbUtils.RunQueryTx(tx, pq, &failedPass)
+	err = dbutl.RunQueryTx(tx, pq, &failedPass)
 
 	switch {
 	case err == sql.ErrNoRows:
@@ -832,7 +832,7 @@ func failedUserPasswordValidation(userID int, user string) {
 
 	dt := time.Now().UTC()
 
-	pq = dbUtils.PQuery(`
+	pq = dbutl.PQuery(`
 	    UPDATE "user"
 	       SET failed_password_atmpts = CASE WHEN ? = 1 THEN
 	                                        1
@@ -852,13 +852,13 @@ func failedUserPasswordValidation(userID int, user string) {
 		dt,
 		userID)
 
-	_, err = dbUtils.ExecTx(tx, pq)
+	_, err = dbutl.ExecTx(tx, pq)
 	if err != nil {
 		audit.Log(err, "failed-login", "Failed to setup failed password params.", "user", user)
 		return
 	}
 
-	pq = dbUtils.PQuery(`
+	pq = dbutl.PQuery(`
 	    SELECT failed_password_atmpts
 	      FROM "user" u
 	     WHERE user_id = ?
@@ -880,13 +880,13 @@ func failedUserPasswordValidation(userID int, user string) {
 	}
 
 	if failedPass.FailedPasswords >= maxAllowedFailedAtmpts {
-		pq = dbUtils.PQuery(`
+		pq = dbutl.PQuery(`
 		    UPDATE "user"
 		       SET locked_out = 1
 		     WHERE user_id = ?
 		`, userID)
 
-		_, err = dbUtils.ExecTx(tx, pq)
+		_, err = dbutl.ExecTx(tx, pq)
 		if err != nil {
 			audit.Log(err, "failed-login", "User locked out.", "user", user)
 			// return // commented on purpose - Geo 18.03.2017
@@ -894,7 +894,7 @@ func failedUserPasswordValidation(userID int, user string) {
 
 		dt := time.Now().UTC()
 
-		pq = dbUtils.PQuery(`
+		pq = dbutl.PQuery(`
 		    UPDATE user_password
 		       SET valid_until = ?
 		     WHERE user_id = ?
@@ -905,7 +905,7 @@ func failedUserPasswordValidation(userID int, user string) {
 			dt,
 			dt)
 
-		_, err = dbUtils.ExecTx(tx, pq)
+		_, err = dbutl.ExecTx(tx, pq)
 		if err != nil {
 			audit.Log(err, "failed-login", "Failed to invalidate user password.", "user", user)
 			// return // commented on purpose - Geo 17.03.2017

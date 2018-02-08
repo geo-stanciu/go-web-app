@@ -34,7 +34,7 @@ var (
 	templates           *template.Template
 	addr                *string
 	db                  *sql.DB
-	dbUtils             *utils.DbUtils
+	dbutl               *utils.DbUtils
 	config              = Configuration{}
 	timezone            *time.Location
 	appName             = "GoWebsiteExample"
@@ -50,7 +50,7 @@ func init() {
 	log.Level = logrus.DebugLevel
 
 	// init databaseutils
-	dbUtils = new(utils.DbUtils)
+	dbutl = new(utils.DbUtils)
 
 	// register SessionData for cookie use
 	gob.Register(&SessionData{})
@@ -77,7 +77,7 @@ func main() {
 		return
 	}
 
-	err = dbUtils.Connect2Database(&db, config.Database.DbType, config.Database.DbURL)
+	err = dbutl.Connect2Database(&db, config.Database.DbType, config.Database.DbURL)
 	if err != nil {
 		log.Println(err)
 		return
@@ -90,7 +90,7 @@ func main() {
 		return
 	}
 
-	audit.SetLogger(appName+"/"+appVersion, log, dbUtils)
+	audit.SetLogger(appName+"/"+appVersion, log, dbutl)
 	audit.SetWaitGroup(&wg)
 	defer audit.Close()
 

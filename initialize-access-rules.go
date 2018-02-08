@@ -96,7 +96,7 @@ func setAccessRules(tx *sql.Tx, reqType string, menus []*menu) (bool, error) {
 	for _, m := range menus {
 		if m.requestURL == allOtherRequests {
 			// MySQL does not support except or minus queries at this time
-			pq = dbUtils.PQuery(`
+			pq = dbutl.PQuery(`
 				SELECT r.request_id
 				  FROM request r
 				  LEFT OUTER JOIN request_role rr ON (r.request_id = rr.request_id)
@@ -111,7 +111,7 @@ func setAccessRules(tx *sql.Tx, reqType string, menus []*menu) (bool, error) {
 			// references: https://github.com/lib/pq/issues/81
 			//             https://github.com/lib/pq/issues/635
 			var reqID []int32
-			err = dbUtils.ForEachRowTx(tx, pq, func(row *sql.Rows, sc *utils.SQLScan) error {
+			err = dbutl.ForEachRowTx(tx, pq, func(row *sql.Rows, sc *utils.SQLScan) error {
 				err = row.Scan(&requestID)
 				if err != nil {
 					return err
@@ -134,7 +134,7 @@ func setAccessRules(tx *sql.Tx, reqType string, menus []*menu) (bool, error) {
 			}
 
 		} else {
-			pq = dbUtils.PQuery(`
+			pq = dbutl.PQuery(`
 				SELECT request_id
 				FROM request
 				WHERE request_url = ?
@@ -148,7 +148,7 @@ func setAccessRules(tx *sql.Tx, reqType string, menus []*menu) (bool, error) {
 			}
 
 			for _, n := range m.name {
-				pq := dbUtils.PQuery(`
+				pq := dbutl.PQuery(`
 					SELECT CASE WHEN EXISTS (
 						SELECT 1
 						FROM request_name
@@ -169,7 +169,7 @@ func setAccessRules(tx *sql.Tx, reqType string, menus []*menu) (bool, error) {
 
 				foundNew = true
 
-				pq = dbUtils.PQuery(`
+				pq = dbutl.PQuery(`
 					INSERT INTO request_name (
 						request_id,
 						language,
@@ -180,7 +180,7 @@ func setAccessRules(tx *sql.Tx, reqType string, menus []*menu) (bool, error) {
 					n.language,
 					n.name)
 
-				_, err = dbUtils.ExecTx(tx, pq)
+				_, err = dbutl.ExecTx(tx, pq)
 				if err != nil {
 					return false, err
 				}
@@ -202,7 +202,7 @@ func addRequest2Role(tx *sql.Tx, requestID int32, role string) (bool, error) {
 	var roleID int32
 	var found bool
 
-	pq := dbUtils.PQuery(`
+	pq := dbutl.PQuery(`
 		SELECT role_id
 		FROM role
 		WHERE loweredrole = lower(?)
@@ -213,7 +213,7 @@ func addRequest2Role(tx *sql.Tx, requestID int32, role string) (bool, error) {
 		return false, err
 	}
 
-	pq = dbUtils.PQuery(`
+	pq = dbutl.PQuery(`
 		SELECT CASE WHEN EXISTS (
 			SELECT 1
 			FROM request_role
@@ -232,7 +232,7 @@ func addRequest2Role(tx *sql.Tx, requestID int32, role string) (bool, error) {
 		return false, nil
 	}
 
-	pq = dbUtils.PQuery(`
+	pq = dbutl.PQuery(`
 		INSERT INTO request_role (
 			role_id,
 			request_id
@@ -241,7 +241,7 @@ func addRequest2Role(tx *sql.Tx, requestID int32, role string) (bool, error) {
 	`, roleID,
 		requestID)
 
-	_, err = dbUtils.ExecTx(tx, pq)
+	_, err = dbutl.ExecTx(tx, pq)
 	if err != nil {
 		return false, err
 	}

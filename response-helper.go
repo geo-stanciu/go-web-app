@@ -79,7 +79,7 @@ func getResponseHelperByURL(sessionData *SessionData, url string, requestType st
 		lang = "EN"
 	}
 
-	pq := dbUtils.PQuery(`
+	pq := dbutl.PQuery(`
 		WITH access AS (
 			SELECT rr.request_id
 			  FROM "user" u, user_role ur, request_role rr
@@ -116,7 +116,7 @@ func getResponseHelperByURL(sessionData *SessionData, url string, requestType st
 		sURL,
 		requestType)
 
-	err := dbUtils.RunQuery(pq, &res)
+	err := dbutl.RunQuery(pq, &res)
 
 	switch {
 	case err == sql.ErrNoRows:

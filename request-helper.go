@@ -37,7 +37,7 @@ func (r *RequestHelper) Exists() (bool, error) {
 	var err error
 	var found bool
 
-	pq := dbUtils.PQuery(`
+	pq := dbutl.PQuery(`
 		select CASE WHEN EXISTS (
 		select 1
 			from request
@@ -61,7 +61,7 @@ func (r *RequestHelper) GetByURL(requestType string, requestURL string) error {
 	r.Lock()
 	defer r.Unlock()
 
-	pq := dbUtils.PQuery(`
+	pq := dbutl.PQuery(`
 		select request_id,
 			   request_type,
 			   request_url,
@@ -79,7 +79,7 @@ func (r *RequestHelper) GetByURL(requestType string, requestURL string) error {
 	`, requestURL,
 		requestType)
 
-	err := dbUtils.RunQueryTx(r.tx, pq, r)
+	err := dbutl.RunQueryTx(r.tx, pq, r)
 
 	switch {
 	case err == sql.ErrNoRows:
@@ -96,7 +96,7 @@ func (r *RequestHelper) GetByID(requestID int) error {
 	r.Lock()
 	defer r.Unlock()
 
-	pq := dbUtils.PQuery(`
+	pq := dbutl.PQuery(`
 		select request_id,
 			   request_type,
 			   request_url,
@@ -112,7 +112,7 @@ func (r *RequestHelper) GetByID(requestID int) error {
 	     where request_id = ?
 	`, requestID)
 
-	err := dbUtils.RunQueryTx(r.tx, pq, r)
+	err := dbutl.RunQueryTx(r.tx, pq, r)
 
 	switch {
 	case err == sql.ErrNoRows:
@@ -145,7 +145,7 @@ func (r *RequestHelper) testSave() error {
 
 	var found bool
 
-	pq := dbUtils.PQuery(`
+	pq := dbutl.PQuery(`
 	    SELECT CASE WHEN EXISTS (
 	        SELECT 1
 			  from request
@@ -181,7 +181,7 @@ func (r *RequestHelper) Save() error {
 	}
 
 	if r.RequestID <= 0 {
-		pq := dbUtils.PQuery(`
+		pq := dbutl.PQuery(`
 			insert into request (
 				request_template,
 				request_url,
@@ -214,12 +214,12 @@ func (r *RequestHelper) Save() error {
 			r.FireEvent,
 		)
 
-		_, err = dbUtils.ExecTx(r.tx, pq)
+		_, err = dbutl.ExecTx(r.tx, pq)
 		if err != nil {
 			return err
 		}
 
-		pq = dbUtils.PQuery(`
+		pq = dbutl.PQuery(`
 			SELECT request_id
 			  FROM request
 			 WHERE request_url = ?
@@ -245,7 +245,7 @@ func (r *RequestHelper) Save() error {
 		}
 
 		if !r.Equals(&old) {
-			pq := dbUtils.PQuery(`
+			pq := dbutl.PQuery(`
 			    UPDATE request
 			       SET request_template = ?,
 				   request_url = ?,
@@ -273,7 +273,7 @@ func (r *RequestHelper) Save() error {
 				r.RequestID,
 			)
 
-			_, err = dbUtils.ExecTx(r.tx, pq)
+			_, err = dbutl.ExecTx(r.tx, pq)
 			if err != nil {
 				return err
 			}
