@@ -19,6 +19,7 @@ type ConfigurationGeneral struct {
 	Port     string   `xml:"port"`
 	Timezone string   `xml:"timezone"`
 	IsHTTPS  bool     `xml:"use-https"`
+	AdminIP  string   `xml:"admin-ip"`
 }
 
 // ConfigurationDatabase - database config

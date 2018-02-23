@@ -330,3 +330,16 @@ func isRequestFromLocalhost(r *http.Request) bool {
 
 	return false
 }
+
+func isRequestFromAdminIP(r *http.Request) bool {
+	ip, _, _ := net.SplitHostPort(r.RemoteAddr)
+	ipList := strings.Split(config.General.AdminIP, ",")
+
+	for _, addr := range ipList {
+		if ip == addr {
+			return true
+		}
+	}
+
+	return false
+}

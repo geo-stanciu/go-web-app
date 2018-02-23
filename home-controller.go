@@ -243,7 +243,9 @@ func (HomeController) Register(w http.ResponseWriter, r *http.Request, res *Resp
 		return &lres, err
 	}
 
-	if isRequestFromLocalhost(r) && strings.ToLower(u.Username) == "admin" {
+	if (isRequestFromLocalhost(r) || isRequestFromAdminIP(r)) &&
+		strings.ToLower(u.Username) == "admin" {
+
 		err = u.AddToRole("Administrator")
 		if err == nil {
 			err = u.Activate()
