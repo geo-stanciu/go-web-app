@@ -26,14 +26,14 @@ create index idx_exchange_rate_date on exchange_rate (exchange_date);
 
 CREATE TABLE IF NOT EXISTS audit_log (
     audit_log_id   bigserial primary key,
-    log_source     varchar(64) not null,
+    source         varchar(64) not null,
+    source_version varchar(16) not null,
     log_time       timestamp not null,
-    audit_msg      jsonb     not null
+    log_msg        jsonb     not null
 );
 
 CREATE index idx_time_audit_log ON audit_log (log_time);
-CREATE INDEX idx_log_source_audit_log ON audit_log (log_source);
-
+CREATE INDEX idx_log_source_audit_log ON audit_log (source);
 
 
 SET search_path TO wmeter,public;

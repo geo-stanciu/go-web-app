@@ -22,13 +22,14 @@ create index idx_exchange_rate_date on exchange_rate (exchange_date);
 
 create table audit_log (
     audit_log_id   bigint identity(1,1) PRIMARY KEY,
-    log_source     varchar(64) not null,
+    source         varchar(64) not null,
+    source_version varchar(16) not null,
     log_time       datetime not null,
-    audit_msg      ntext not null
+    log_msg        ntext not null
 );
 
 create index idx_time_audit_log on audit_log (log_time);
-CREATE INDEX idx_log_source_audit_log ON audit_log (log_source);
+CREATE INDEX idx_log_source_audit_log ON audit_log (source);
 
 
 CREATE TABLE request (

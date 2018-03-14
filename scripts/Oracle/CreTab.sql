@@ -24,13 +24,14 @@ create sequence s$audit_log nocache start with 1;
 
 create table audit_log (
     audit_log_id   number default s$audit_log.nextval primary key,
-    log_source     varchar2(64) not null,
+    source         varchar2(64) not null,
+    source_version varchar2(16) not null,
     log_time       timestamp not null,
-    audit_msg      long      not null
+    log_msg        long      not null
 );
 
 create index idx_time_audit_log on audit_log (log_time);
-CREATE INDEX idx_log_source_audit_log ON audit_log (log_source);
+CREATE INDEX idx_log_source_audit_log ON audit_log (source);
 
 
 create sequence s$request nocache start with 1;

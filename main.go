@@ -90,7 +90,7 @@ func main() {
 		return
 	}
 
-	audit.SetLogger(appName+"/"+appVersion, log, dbutl)
+	audit.SetLogger(appName, appVersion, log, dbutl)
 	audit.SetWaitGroup(&wg)
 	defer audit.Close()
 
@@ -169,5 +169,7 @@ func main() {
 	}
 
 	log.Info("Closing application...")
+
+	// wait for all logs to be written
 	wg.Wait()
 }

@@ -103,10 +103,10 @@ func setAccessRules(tx *sql.Tx, reqType string, menus []*menu) (bool, error) {
 				 WHERE rr.request_id is null
 			`)
 
-			// kinda ridiculos
-			// apparently on Postgres you need to close
-			// your previous fetch on a transaction
+			// on PostgreSQL you need to close your active fetch
+			// on a transaction
 			// before you can work again on it
+			// workaround: on PostgreSQL you can use declared cursors
 			// for now: read id's in memory and run the next query on array
 			// references: https://github.com/lib/pq/issues/81
 			//             https://github.com/lib/pq/issues/635
@@ -132,7 +132,6 @@ func setAccessRules(tx *sql.Tx, reqType string, menus []*menu) (bool, error) {
 					}
 				}
 			}
-
 		} else {
 			pq = dbutl.PQuery(`
 				SELECT request_id
