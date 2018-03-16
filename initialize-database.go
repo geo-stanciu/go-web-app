@@ -30,6 +30,10 @@ func initializeDatabase() error {
 		audit.Log(err, "initialize", "access rules - members")
 	}
 
+	if foundNew, err = addChildRequestAccessRules(tx); foundNew {
+		audit.Log(err, "initialize", "access rules - child requests")
+	}
+
 	tx.Commit()
 
 	return err

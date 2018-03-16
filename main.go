@@ -38,7 +38,7 @@ var (
 	config              = Configuration{}
 	timezone            *time.Location
 	appName             = "GoWebsiteExample"
-	appVersion          = "0.0.0.2"
+	appVersion          = "0.0.0.3"
 	authCookieStoreName = strings.Replace(appName, " ", "", -1)
 	errCookieStoreName  = strings.Replace(appName, " ", "", -1) + "Err"
 	cookieStore         *sessions.CookieStore

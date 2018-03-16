@@ -28,6 +28,8 @@ type urlRequest struct {
 	IndexLevel      int    `sql:"index_level"`
 	OrderNumber     int    `sql:"order_number"`
 	FireEvent       int    `sql:"fire_event"`
+	ParentURL       string
+	ParentID        int `sql:"parent_id"`
 }
 
 var requestLock sync.RWMutex
@@ -72,7 +74,8 @@ func (r *RequestHelper) GetByURL(requestType string, requestURL string) error {
 			   redirect_on_error,
 			   case when index_level is null then -1 else index_level end AS index_level,
 			   case when order_number is null then -1 else order_number end AS order_number,
-			   fire_event
+			   fire_event,
+			   case when parent_id is null then -1 else parent_id end AS parent_id
 	      from request
 		 where request_url = ?
 		   and request_type = ?
@@ -107,7 +110,8 @@ func (r *RequestHelper) GetByID(requestID int) error {
 			   redirect_on_error,
 			   case when index_level is null then -1 else index_level end AS index_level,
 			   case when order_number is null then -1 else order_number end AS order_number,
-			   fire_event
+			   fire_event,
+			   case when parent_id is null then -1 else parent_id end AS parent_id
 	      from request
 	     where request_id = ?
 	`, requestID)
@@ -180,6 +184,15 @@ func (r *RequestHelper) Save() error {
 		return err
 	}
 
+	if r.ParentID <= 0 && len(r.ParentURL) > 0 {
+		parent := RequestHelper{}
+		err = parent.GetByURL("GET", r.ParentURL)
+		if err != nil {
+			return err
+		}
+		r.ParentID = parent.RequestID
+	}
+
 	if r.RequestID <= 0 {
 		pq := dbutl.PQuery(`
 			insert into request (
@@ -192,13 +205,16 @@ func (r *RequestHelper) Save() error {
 				redirect_on_error,
 				index_level,
 				order_number,
-				fire_event
+				fire_event,
+				parent_id
 			)
 			values (
-				?, ?, ?, ?, ?, ?, ?,
+				?, ?, ?, ?, ?,
+				?, ?,
 				case when ? <= 0 then CAST(null AS int) else ? end,
 				case when ? <= 0 then CAST(null AS int) else ? end,
-				?
+				?,
+				case when ? <= 0 then CAST(null AS int) else ? end,
 			)
 		`, r.RequestTemplate,
 			r.RequestURL,
@@ -212,6 +228,8 @@ func (r *RequestHelper) Save() error {
 			r.OrderNumber,
 			r.OrderNumber,
 			r.FireEvent,
+			r.ParentID,
+			r.ParentID,
 		)
 
 		_, err = dbutl.ExecTx(r.tx, pq)
@@ -256,7 +274,8 @@ func (r *RequestHelper) Save() error {
 				   redirect_on_error = ?,
 				   index_level = case when ? <= 0 then CAST(null AS int) else ? end,
 				   order_number = case when ? <= 0 then CAST(null AS int) else ? end,
-				   fire_event = ?
+				   fire_event = ?,
+				   parent_id = case when ? <= 0 then CAST(null AS int) else ? end
 			     WHERE request_id = ?
 			`, r.RequestTemplate,
 				r.RedirectURL,
@@ -271,6 +290,8 @@ func (r *RequestHelper) Save() error {
 				r.OrderNumber,
 				r.FireEvent,
 				r.RequestID,
+				r.ParentID,
+				r.ParentID,
 			)
 
 			_, err = dbutl.ExecTx(r.tx, pq)
@@ -299,7 +320,8 @@ func (r *RequestHelper) Equals(r1 *RequestHelper) bool {
 		r.RedirectOnError != r1.RedirectOnError ||
 		r.IndexLevel != r1.IndexLevel ||
 		r.OrderNumber != r1.OrderNumber ||
-		r.FireEvent != r1.FireEvent {
+		r.FireEvent != r1.FireEvent ||
+		r.ParentID != r1.ParentID {
 
 		return false
 	}

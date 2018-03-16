@@ -104,12 +104,11 @@ func getResponseHelperByURL(sessionData *SessionData, url string, requestType st
 			r.redirect_url,
 			r.redirect_on_error
 		FROM request r
+		JOIN access a ON (r.request_id = a.request_id)
 		LEFT OUTER JOIN name nm ON (r.request_id = nm.request_id)
 		WHERE r.request_url = ?
-		AND r.request_type = ?
-		AND r.request_id IN (
-			select request_id from access
-		)
+		  AND r.request_type = ?
+		LIMIT 1
 	`, suser,
 		"All",
 		lang,

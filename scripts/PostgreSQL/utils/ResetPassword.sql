@@ -16,11 +16,6 @@ begin
       from wmeter.user
      where loweredusername = _user;
 
-    update wmeter.user
-       set locked_out = 0,
-           failed_password_atmpts = 0
-     where user_id = _user_id;
-
     update wmeter.user_password p
 	   set valid_until = current_timestamp
      where user_id = _user_id
@@ -31,19 +26,19 @@ begin
         user_id,
         password,
         password_salt,
-        valid_until,
-        temporary,
         valid_from
     )
-    select _user_id,
-           _password,
-           _password_salt,
-           current_timestamp + interval '30' day,
-           0, -- temporary
-           current_timestamp at time zone 'UTC';
+    values (
+        _user_id,
+        _password,
+        _password_salt,
+        current_timestamp at time zone 'UTC'
+    );
 
     UPDATE wmeter.user
-       SET last_password_change = current_timestamp
+       SET last_password_change = current_timestamp,
+           locked_out = 0,
+           failed_password_atmpts = 0
      WHERE user_id = _user_id;
 
 end$$;

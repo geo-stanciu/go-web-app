@@ -249,6 +249,7 @@ func (HomeController) Register(w http.ResponseWriter, r *http.Request, res *Resp
 		err = u.AddToRole("Administrator")
 		if err == nil {
 			err = u.Activate()
+			err = u.SetUnlimited()
 			err = u.AddToRole("Member")
 		}
 	} else {

@@ -22,7 +22,9 @@ CREATE TABLE IF NOT EXISTS exchange_rate (
         references currency (currency_id)
 );
 
-create index idx_exchange_rate_date on exchange_rate (exchange_date);
+create index if not exists idx_exchange_rate_curr_id on exchange_rate (currency_id);
+create index if not exists idx_exchange_rate_refcurr_id on exchange_rate (reference_currency_id);
+create index if not exists idx_exchange_rate_date on exchange_rate (exchange_date);
 
 CREATE TABLE IF NOT EXISTS audit_log (
     audit_log_id   bigserial primary key,
@@ -51,11 +53,16 @@ CREATE TABLE IF NOT EXISTS request (
     index_level       int,
     order_number      int,
     fire_event        int          not null DEFAULT 1,
+    parent_id       int,
     constraint request_url_uk unique (request_url, request_type),
     constraint request_type_chk check (request_type in ('GET', 'POST')),
     constraint request_idx_uk unique (index_level, order_number),
-    constraint request_event_chk check (fire_event in (0, 1))
+    constraint request_event_chk check (fire_event in (0, 1)),
+    constraint request_parent foreign key (parent_id)
+        references request (request_id)
 );
+
+create index if not exists idx_request_parent on request (parent_id);
 
 CREATE TABLE IF NOT EXISTS role (
     role_id     serial PRIMARY KEY,
@@ -74,6 +81,8 @@ CREATE TABLE IF NOT EXISTS request_name (
       REFERENCES request (request_id)
 );
 
+create index if not exists idx_request_name_id on request_name (request_id);
+
 CREATE TABLE IF NOT EXISTS request_role (
     role_id int NOT NULL,
     request_id int NOT NULL,
@@ -83,6 +92,9 @@ CREATE TABLE IF NOT EXISTS request_role (
     constraint request_role_req_fk FOREIGN KEY (request_id)
       REFERENCES request (request_id)
 );
+
+create index if not exists idx_request_role_id on request_role (role_id);
+create index if not exists idx_request_role_re1_id on request_role (request_id);
 
 CREATE TABLE IF NOT EXISTS "user" (
     user_id                bigserial PRIMARY KEY,
@@ -119,6 +131,8 @@ CREATE TABLE IF NOT EXISTS user_password (
       references "user"(user_id)
 );
 
+create index if not exists idx_user_password_usr_id on user_password (user_id);
+
 CREATE TABLE IF NOT EXISTS user_role (
     user_role_id bigserial PRIMARY KEY,
     user_id      bigint not null,
@@ -130,6 +144,9 @@ CREATE TABLE IF NOT EXISTS user_role (
     constraint user_role_usr_fk foreign key (user_id)
       references "user"(user_id)
 );
+
+create index if not exists idx_user_role_role_id on user_role (role_id);
+create index if not exists idx_user_role_usr_id on user_role (user_id);
 
 CREATE TABLE IF NOT EXISTS user_role_history (
     user_role_id bigint PRIMARY KEY,
@@ -143,6 +160,9 @@ CREATE TABLE IF NOT EXISTS user_role_history (
       references "user"(user_id)
 );
 
+create index if not exists idx_user_role_h_role_id on user_role_history (role_id);
+create index if not exists idx_user_role_h_usr_id on user_role_history (user_id);
+
 CREATE TABLE IF NOT EXISTS user_ip (
   user_ip_id bigserial PRIMARY KEY,
   user_id    bigint       NOT NULL,
@@ -150,6 +170,8 @@ CREATE TABLE IF NOT EXISTS user_ip (
   constraint user_ip_fk foreign key (user_id)
     references "user"(user_id)
 );
+
+create index if not exists idx_user_ip_usr_id on user_ip (user_id);
 
 CREATE TABLE IF NOT EXISTS cookie_encode_key (
     cookie_encode_key_id serial       PRIMARY KEY,

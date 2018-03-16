@@ -282,6 +282,29 @@ func (u *MembershipUser) Activate() error {
 	return nil
 }
 
+// SetUnlimited - set user not to expire
+func (u *MembershipUser) SetUnlimited() error {
+	u.Lock()
+	defer u.Unlock()
+
+	pq := dbutl.PQuery(`
+		UPDATE user_password
+		   SET valid_until = null
+		 WHERE password_id = (
+			   SELECT max(password_id)
+				 FROM user_password
+				WHERE user_id = ?
+		)
+	`, u.UserID)
+
+	_, err := dbutl.ExecTx(u.tx, pq)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // GetUserRoles - get user roles
 func (u *MembershipUser) GetUserRoles() ([]*MembershipRole, error) {
 	u.RLock()

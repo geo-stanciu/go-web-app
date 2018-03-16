@@ -85,6 +85,57 @@ func addGeneralMemberRequestsAccessRules(tx *sql.Tx) (bool, error) {
 	return foundNew, err
 }
 
+type accessRule struct {
+	ParentID int32  `sql:"parent_id"`
+	ChildID  int32  `sql:"child_id"`
+	RoleID   int32  `sql:"role_id"`
+	Role     string `sql:"role"`
+}
+
+func addChildRequestAccessRules(tx *sql.Tx) (bool, error) {
+	foundNew := false
+	var err error
+
+	pq := dbutl.PQuery(`
+		WITH child AS (
+			SELECT request_id, parent_id
+			  FROM request
+			 WHERE parent_id IS NOT NULL
+		)
+		SELECT c.parent_id,
+			   c.request_id AS child_id,
+			   rr.role_id,
+			   r.role
+		  FROM request_role rr
+		  JOIN role r ON (rr.role_id = r.role_id)
+		  JOIN child c ON (rr.request_id = c.parent_id)
+	`)
+
+	var access []*accessRule
+	err = dbutl.ForEachRowTx(tx, pq, func(row *sql.Rows, sc *utils.SQLScan) error {
+		arule := accessRule{}
+		err = sc.Scan(dbutl, row, &arule)
+		if err != nil {
+			return err
+		}
+
+		access = append(access, &arule)
+		return nil
+	})
+	if err != nil {
+		return false, err
+	}
+
+	for _, arule := range access {
+		foundNew, err = addRequest2Role(tx, arule.ChildID, arule.Role)
+		if err != nil {
+			return false, err
+		}
+	}
+
+	return foundNew, nil
+}
+
 func setAccessRules(tx *sql.Tx, reqType string, menus []*menu) (bool, error) {
 	var found bool
 	var requestID int32
