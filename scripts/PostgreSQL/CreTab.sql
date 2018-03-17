@@ -116,6 +116,7 @@ CREATE TABLE IF NOT EXISTS "user" (
     last_connect_ip        varchar(128),
     valid                  int         not null DEFAULT 1,
     locked_out             int         not null DEFAULT 0,
+    password_expires       int         not null DEFAULT 1,
     constraint user_uk unique(loweredusername)
 );
 

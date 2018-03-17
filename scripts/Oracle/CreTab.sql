@@ -117,6 +117,7 @@ CREATE TABLE "user" (
     last_connect_ip        varchar2(128),
     valid                  number      DEFAULT 1 not null,
     locked_out             number      DEFAULT 0 not null,
+    password_expires       int         DEFAULT 1 not null,
     constraint user_uk unique(loweredusername)
 );
 

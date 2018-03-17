@@ -27,13 +27,19 @@ const (
 // MembershipUser - membership user helper
 type MembershipUser struct {
 	sync.RWMutex
-	tx       *sql.Tx
-	UserID   int    `sql:"user_id"`
-	Username string `sql:"username"`
-	Name     string `sql:"name"`
-	Surname  string `sql:"surname"`
-	Email    string `sql:"email"`
-	Password string `json:"-"`
+	tx              *sql.Tx
+	UserID          int       `sql:"user_id"`
+	Username        string    `sql:"username"`
+	Name            string    `sql:"name"`
+	Surname         string    `sql:"surname"`
+	Email           string    `sql:"email"`
+	PasswordExpires bool      `sql:"password_expires" json:"-"`
+	CreationTime    time.Time `sql:"creation_time" json:"-"`
+	LastUpdate      time.Time `sql:"last_update" json:"-"`
+	Activated       bool      `sql:"activated" json:"-"`
+	LockedOut       bool      `sql:"locked_out" json:"-"`
+	Valid           bool      `sql:"valid" json:"-"`
+	Password        string    `json:"-"`
 }
 
 var membershipUserLock sync.RWMutex
@@ -69,7 +75,13 @@ func (u *MembershipUser) GetByName(user string) error {
 	           username,
 	           name,
 	           surname,
-	           email
+			   email,
+			   password_expires,
+			   creation_time,
+			   last_update,
+			   activated,
+			   locked_out,
+			   valid
 	      FROM "user"
 	     WHERE loweredusername = lower(?)
 	`, user)
@@ -96,7 +108,13 @@ func (u *MembershipUser) GetByID(userID int) error {
 	        username,
 	        name,
 	        surname,
-	        email
+			email,
+			password_expires,
+			creation_time,
+			last_update,
+			activated,
+			locked_out,
+			valid
 	     FROM "user"
 	    WHERE user_id = ?
 	`, userID)
@@ -159,6 +177,9 @@ func (u *MembershipUser) Save() error {
 	dt := time.Now().UTC()
 
 	if u.UserID <= 0 {
+		u.CreationTime = dt
+		u.LastUpdate = dt
+
 		pq := dbutl.PQuery(`
 		    INSERT INTO "user" (
 		        username,
@@ -177,8 +198,8 @@ func (u *MembershipUser) Save() error {
 			u.Surname,
 			u.Email,
 			strings.ToLower(u.Email),
-			dt,
-			dt)
+			u.CreationTime,
+			u.LastUpdate)
 
 		_, err = dbutl.ExecTx(u.tx, pq)
 		if err != nil {
@@ -218,6 +239,8 @@ func (u *MembershipUser) Save() error {
 		dt := time.Now().UTC()
 
 		if !u.Equals(&old) {
+			u.LastUpdate = dt
+
 			pq := dbutl.PQuery(`
 			    UPDATE "user"
 			       SET username     = ?,
@@ -225,7 +248,7 @@ func (u *MembershipUser) Save() error {
 			           name            = ?,
 			           surname         = ?,
 			           email           = ?,
-			           loweredemail    = ?,
+					   loweredemail    = ?,
 			           last_update     = ?
 			     WHERE user_id = ?
 			`, u.Username,
@@ -234,12 +257,16 @@ func (u *MembershipUser) Save() error {
 				u.Surname,
 				u.Email,
 				strings.ToLower(u.Email),
-				dt,
+				u.LastUpdate,
 				u.UserID)
 
 			_, err = dbutl.ExecTx(u.tx, pq)
 			if err != nil {
 				return err
+			}
+
+			if old.PasswordExpires && !u.PasswordExpires {
+				u.SetUnlimited()
 			}
 
 			audit.Log(nil, "update-user", "Update user.", "old", &old, "new", u)
@@ -262,6 +289,7 @@ func (u *MembershipUser) Activate() error {
 	defer u.Unlock()
 
 	dt := time.Now().UTC()
+	u.Activated = true
 
 	pq := dbutl.PQuery(`
 		UPDATE "user"
@@ -287,6 +315,8 @@ func (u *MembershipUser) SetUnlimited() error {
 	u.Lock()
 	defer u.Unlock()
 
+	u.PasswordExpires = false
+
 	pq := dbutl.PQuery(`
 		UPDATE user_password
 		   SET valid_until = null
@@ -294,10 +324,23 @@ func (u *MembershipUser) SetUnlimited() error {
 			   SELECT max(password_id)
 				 FROM user_password
 				WHERE user_id = ?
-		)
+		      )
+		   AND valid_until IS NOT NULL
 	`, u.UserID)
 
 	_, err := dbutl.ExecTx(u.tx, pq)
+	if err != nil {
+		return err
+	}
+
+	pq = dbutl.PQuery(`
+		UPDATE "user"
+		   SET password_expires = 0
+		 WHERE user_id = ?
+		   AND password_expires <> 0
+	`, u.UserID)
+
+	_, err = dbutl.ExecTx(u.tx, pq)
 	if err != nil {
 		return err
 	}
@@ -615,7 +658,7 @@ func (u *MembershipUser) changePassword() error {
 
 	until := dt.Add(time.Duration(changeInterval*24) * time.Hour)
 
-	if changeInterval > 0 {
+	if changeInterval > 0 && u.PasswordExpires {
 		pq = dbutl.PQuery(`
 			INSERT INTO user_password (
 				user_id,
@@ -676,7 +719,8 @@ func (u *MembershipUser) Equals(usr *MembershipUser) bool {
 		u.Username != usr.Username ||
 		u.Name != usr.Name ||
 		u.Surname != usr.Surname ||
-		u.Email != usr.Email {
+		u.Email != usr.Email ||
+		u.PasswordExpires != usr.PasswordExpires {
 
 		return false
 	}
