@@ -34,8 +34,8 @@ CREATE TABLE IF NOT EXISTS audit_log (
     log_msg        jsonb     not null
 );
 
-CREATE index idx_time_audit_log ON audit_log (log_time);
-CREATE INDEX idx_log_source_audit_log ON audit_log (source);
+create index if not exists idx_time_audit_log ON audit_log (log_time);
+create index if not exists idx_log_source_audit_log ON audit_log (source);
 
 
 SET search_path TO wmeter,public;
