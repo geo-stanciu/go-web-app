@@ -223,14 +223,23 @@ func (HomeController) Register(w http.ResponseWriter, r *http.Request, res *Resp
 	}
 	defer tx.Rollback()
 
+	passwordExpires := false
+	if config.PasswordRules.ChangeInterval > 0 {
+		passwordExpires = true
+	}
+
 	u := MembershipUser{
-		tx:       tx,
-		UserID:   -1,
-		Username: user,
-		Name:     name,
-		Surname:  surname,
-		Email:    email,
-		Password: pass,
+		tx: tx,
+		UserModel: models.UserModel{
+			UserID:          -1,
+			Username:        user,
+			Name:            name,
+			Surname:         surname,
+			Email:           email,
+			Password:        pass,
+			PasswordExpires: passwordExpires,
+			Valid:           true,
+		},
 	}
 
 	err = u.Save()
@@ -254,6 +263,10 @@ func (HomeController) Register(w http.ResponseWriter, r *http.Request, res *Resp
 		}
 	} else {
 		err = u.AddToRole("Member")
+
+		if err == nil && config.UserActivation.AutoActivate {
+			err = u.Activate()
+		}
 	}
 
 	if err != nil {
@@ -389,6 +402,65 @@ func (HomeController) ChangePassword(w http.ResponseWriter, r *http.Request, res
 	audit.Log(nil, "change-password", lres.SError, "user", usr.Username, "email", usr.Email)
 
 	tx.Commit()
+
+	return &lres, nil
+}
+
+// Users - Users page
+func (HomeController) Users(w http.ResponseWriter, r *http.Request, res *ResponseHelper) (*models.UsersResponseModel, error) {
+	var lres models.UsersResponseModel
+
+	spage := r.FormValue("lpage")
+	srowsonpage := r.FormValue("lrowsonpage")
+
+	lpage := utils.String2int(spage)
+	lrowsonpage := utils.String2int(srowsonpage)
+
+	if lrowsonpage < 0 {
+		lrowsonpage = 0
+	}
+
+	lmin := 0
+	if lpage > 1 {
+		lmin = (lpage - 1) * lrowsonpage
+	}
+
+	pq := dbutl.PQuery(`
+		SELECT user_id,
+	           username,
+	           name,
+	           surname,
+			   email,
+			   password_expires,
+			   creation_time,
+			   last_update,
+			   activated,
+			   locked_out,
+			   valid
+		  FROM "user"
+		 ORDER BY name,
+				  surname,
+				  email,
+				  user_id
+		 LIMIT ? OFFSET ?
+	`, lrowsonpage,
+		lmin)
+
+	var err error
+	err = dbutl.ForEachRow(pq, func(row *sql.Rows, sc *utils.SQLScan) error {
+		var usr models.UserModel
+		err = sc.Scan(dbutl, row, &usr)
+		if err != nil {
+			return err
+		}
+
+		lres.UserModel = append(lres.UserModel, &usr)
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
 
 	return &lres, nil
 }

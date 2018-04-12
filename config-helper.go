@@ -7,10 +7,11 @@ import (
 
 // Configuration - config helper
 type Configuration struct {
-	XMLName       xml.Name `xml:"config"`
-	General       ConfigurationGeneral
-	Database      ConfigurationDatabase
-	PasswordRules ConfigurationPassword
+	XMLName        xml.Name `xml:"config"`
+	General        ConfigurationGeneral
+	Database       ConfigurationDatabase
+	PasswordRules  ConfigurationPassword
+	UserActivation ConfigurationUserActivation
 }
 
 // ConfigurationGeneral - general config
@@ -43,6 +44,14 @@ type ConfigurationPassword struct {
 	MinNonAlphaNumerics       int      `xml:"min-non-alpha-numerics,attr"`
 	AllowRepetitiveCharacters bool     `xml:"allow-repetitive-characters,attr"`
 	CanContainUsername        bool     `xml:"can-contain-username,attr"`
+}
+
+// ConfigurationUserActivation - user activation config
+type ConfigurationUserActivation struct {
+	XMLName      xml.Name `xml:"user-activation"`
+	AutoActivate bool     `xml:"autoactivate,attr"`
+	ByEmail      bool     `xml:"by-email,attr"`
+	MaxValidURL  int      `xml:"max-valid-url,attr"`
 }
 
 // ReadFromFile - read config from file

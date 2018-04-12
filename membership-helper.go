@@ -8,6 +8,8 @@ import (
 	"time"
 	"unicode"
 
+	"./models"
+
 	"strings"
 
 	"github.com/geo-stanciu/go-utils/utils"
@@ -27,19 +29,8 @@ const (
 // MembershipUser - membership user helper
 type MembershipUser struct {
 	sync.RWMutex
-	tx              *sql.Tx
-	UserID          int       `sql:"user_id"`
-	Username        string    `sql:"username"`
-	Name            string    `sql:"name"`
-	Surname         string    `sql:"surname"`
-	Email           string    `sql:"email"`
-	PasswordExpires bool      `sql:"password_expires" json:"-"`
-	CreationTime    time.Time `sql:"creation_time" json:"-"`
-	LastUpdate      time.Time `sql:"last_update" json:"-"`
-	Activated       bool      `sql:"activated" json:"-"`
-	LockedOut       bool      `sql:"locked_out" json:"-"`
-	Valid           bool      `sql:"valid" json:"-"`
-	Password        string    `json:"-"`
+	tx *sql.Tx
+	models.UserModel
 }
 
 var membershipUserLock sync.RWMutex

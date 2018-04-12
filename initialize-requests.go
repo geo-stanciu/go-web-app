@@ -26,7 +26,7 @@ func addRequests(tx *sql.Tx) (bool, error) {
 			RequestURL:      "users",
 			RequestTemplate: "home/users.html",
 			Controller:      "Home",
-			Action:          "-",
+			Action:          "Users",
 			RedirectURL:     "-",
 			RedirectOnError: "-",
 			IndexLevel:      1,
