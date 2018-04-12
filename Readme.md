@@ -14,6 +14,10 @@ As a first step after cloning this repository, you might need to run the followi
 go get -d
 ```
 
+## Initialize your database schema
+
+Check out the **Scripts** folder for the initialization scripts.
+
 ## TODO
 
 - Password rules for register + change password
