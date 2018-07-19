@@ -42,7 +42,7 @@ func handlePostRequest(w http.ResponseWriter, r *http.Request) {
 	url := getBaseURL(r)
 	sessionData, err := getSessionData(r)
 
-	if (err != nil || !sessionData.LoggedIn) && url != "/login" && url != "/register" {
+	if (err != nil || !sessionData.LoggedIn) && url != "/login" && url != "/register" && url != "/stop-process" {
 		if err != nil {
 			audit.Log(err, "no-context", "Failed request", "url", r.URL.Path)
 		}
@@ -67,7 +67,7 @@ func handleGetRequest(w http.ResponseWriter, r *http.Request) {
 	url := getBaseURL(r)
 	sessionData, err := getSessionData(r)
 
-	if (err != nil || !sessionData.LoggedIn) && url != "/login" && url != "/register" {
+	if (err != nil || !sessionData.LoggedIn) && url != "/login" && url != "/register" && url != "/stop-process" {
 		if err != nil {
 			audit.Log(err, "no-context", "Failed request", "url", r.URL.Path)
 		}

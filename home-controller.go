@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"net/http"
+	"os"
 	"time"
 
 	"./models"
@@ -21,6 +22,25 @@ type HomeController struct {
 // Index - index
 func (HomeController) Index(w http.ResponseWriter, r *http.Request, res *ResponseHelper) (*models.GenericResponseModel, error) {
 	return nil, nil
+}
+
+// StopProcess - stops the process
+func (HomeController) StopProcess(w http.ResponseWriter, r *http.Request, res *ResponseHelper) (*models.GenericResponseModel, error) {
+	var lres models.GenericResponseModel
+
+	if !isRequestFromLocalhost(r) {
+		lres.BError = true
+		lres.SError = "Request denied. Your IP address is not acceped for this request."
+	} else {
+		audit.Log(nil, "process-exit", "Stop request encountered. Process is closing...")
+
+		lres.SError = "OK"
+	}
+
+	// exit
+	stop <- os.Interrupt
+
+	return &lres, nil
 }
 
 // Login - login

@@ -23,6 +23,10 @@ type menu struct {
 
 func addGetRequestsAccessRules(tx *sql.Tx) (bool, error) {
 	menus := []*menu{
+		{"stop-process",
+			[]menuName{{"EN", "Stop Process"}},
+			[]userRole{{"All"}},
+		},
 		{"index",
 			[]menuName{{"EN", "Index"}},
 			[]userRole{{"Member"}},

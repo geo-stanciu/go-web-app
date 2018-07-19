@@ -214,7 +214,7 @@ func (r *RequestHelper) Save() error {
 				case when ? <= 0 then CAST(null AS int) else ? end,
 				case when ? <= 0 then CAST(null AS int) else ? end,
 				?,
-				case when ? <= 0 then CAST(null AS int) else ? end,
+				case when ? <= 0 then CAST(null AS int) else ? end
 			)
 		`, r.RequestTemplate,
 			r.RequestURL,

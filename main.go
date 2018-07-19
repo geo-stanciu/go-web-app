@@ -1,14 +1,19 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"flag"
+	"fmt"
 	"html/template"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"sync"
+	"syscall"
 	"time"
 
 	"encoding/gob"
@@ -37,6 +42,8 @@ var (
 	dbutl               *utils.DbUtils
 	config              = Configuration{}
 	timezone            *time.Location
+	hs                  *http.Server
+	stop                chan os.Signal
 	appName             = "GoWebsiteExample"
 	appVersion          = "0.0.0.3"
 	authCookieStoreName = strings.Replace(appName, " ", "", -1)
@@ -51,6 +58,9 @@ func init() {
 
 	// init databaseutils
 	dbutl = new(utils.DbUtils)
+
+	// init exit
+	stop = make(chan os.Signal, 1)
 
 	// register SessionData for cookie use
 	gob.Register(&SessionData{})
@@ -77,10 +87,26 @@ func main() {
 		return
 	}
 
-	err = dbutl.Connect2Database(&db, config.Database.DbType, config.Database.DbURL)
-	if err != nil {
-		log.Println(err)
-		return
+	time2wait := 5
+	startTime := time.Now()
+	endWait := startTime.Add(time.Duration(time2wait) * time.Minute)
+
+	for {
+		err = dbutl.Connect2Database(&db, config.Database.DbType, config.Database.DbURL)
+		if err != nil {
+			log.Println(err)
+
+			now := time.Now()
+
+			if now.After(endWait) {
+				log.Printf("Failed to connect to the database after trying for %d minute(s).\n", time2wait)
+				return
+			}
+
+			time.Sleep(30 * time.Second)
+		} else {
+			break
+		}
 	}
 	defer db.Close()
 
@@ -100,6 +126,11 @@ func main() {
 	cookieStore, err = getNewCookieStore()
 	if err != nil {
 		log.Println(err)
+		return
+	}
+
+	err = parseArguments()
+	if err != nil {
 		return
 	}
 
@@ -152,8 +183,9 @@ func main() {
 		key = encodeKeys[0]
 	}
 
-	err = http.ListenAndServe(*addr,
-		csrf.Protect(
+	hs = &http.Server{
+		Addr: ":" + config.General.Port,
+		Handler: csrf.Protect(
 			key,
 			csrf.Secure(config.General.IsHTTPS),
 			csrf.Path("/"),
@@ -161,15 +193,87 @@ func main() {
 			csrf.CookieName("csrfCookie"),
 			csrf.HttpOnly(true),
 			csrf.MaxAge(24*3600),
-			csrf.RequestHeader("X-CSRF-Token"))(router))
-
-	if err != nil {
-		log.Println(err)
-		return
+			csrf.RequestHeader("X-CSRF-Token"))(router),
 	}
 
-	log.Info("Closing application...")
+	go func() {
+		if err = hs.ListenAndServe(); err != http.ErrServerClosed {
+			audit.Log(err, "Server Start", "Error listening on "+config.General.Port)
+			log.Fatal(err)
+			return
+		}
+	}()
+
+	serverStop()
 
 	// wait for all logs to be written
 	wg.Wait()
+}
+
+func serverStop() {
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+
+	<-stop
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := hs.Shutdown(ctx); err != nil {
+		audit.Log(nil, "Server Stop", "Error closing application")
+	} else {
+		audit.Log(nil, "Server Stop", "Closing application...")
+	}
+
+	time.Sleep(5 * time.Second)
+}
+
+func parseArguments() error {
+	for i, arg := range os.Args {
+		if i == 0 {
+			continue
+		}
+
+		switch arg {
+		case "--stop":
+			audit.Log(nil, "process-stop", "Stop process requested...")
+
+			err := stopProcess(utils.String2int(config.General.Port))
+			if err != nil {
+				audit.Log(err, "process-stop", "Error encountered trying to stop the process...")
+				return err
+			}
+
+			os.Exit(0)
+		default:
+			err := fmt.Errorf("unknown argument \"%s\"", arg)
+			audit.Log(err, "parse-arguments", "Unknown argument encountered...")
+			return err
+		}
+	}
+
+	return nil
+}
+
+func stopProcess(port int) error {
+	schema := "http"
+	if config.General.IsHTTPS {
+		schema = "https"
+	}
+
+	url := fmt.Sprintf("%s://localhost:%d/stop-process", schema, port)
+
+	response, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+
+	buf, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return err
+	}
+
+	audit.Log(nil, "process-stop", "Stop process requested", "server response", string(buf))
+
+	return nil
 }

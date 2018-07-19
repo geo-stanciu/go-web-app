@@ -84,6 +84,16 @@ func addRequests(tx *sql.Tx) (bool, error) {
 		// gets
 		{
 			RequestType:     "GET",
+			RequestURL:      "stop-process",
+			RequestTemplate: "-",
+			Controller:      "Home",
+			Action:          "StopProcess",
+			RedirectURL:     "-",
+			RedirectOnError: "-",
+			FireEvent:       1,
+		},
+		{
+			RequestType:     "GET",
 			RequestURL:      "logout",
 			RequestTemplate: "-",
 			Controller:      "Home",
