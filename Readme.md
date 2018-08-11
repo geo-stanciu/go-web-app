@@ -46,6 +46,7 @@ Check out the **Scripts** folder for the initialization scripts.
 - Anti XRSF
 - Router paths (Named here "Requests". See initialize-requests.go)
 - Acces control (see initialize-database.go and initialize-access-rules.go)
+- Ability to stop the process by calling **/stop-process** from localhost or by calling the excecutable with **--stop** flag.
 
 ## Connect Strings Examples
 
