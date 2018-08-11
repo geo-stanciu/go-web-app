@@ -29,8 +29,14 @@ func (HomeController) StopProcess(w http.ResponseWriter, r *http.Request, res *R
 	var lres models.GenericResponseModel
 
 	if !isRequestFromLocalhost(r) {
+		ip := getClientIP(r)
 		lres.BError = true
-		lres.SError = "Request denied. Your IP address is not acceped for this request."
+		lres.SError = fmt.Sprintf("Request denied from \"%s\". Your IP address is not acceped for this request.", ip)
+
+		err1 := fmt.Errorf("request denied from \"%s\"", ip)
+		audit.Log(err1, "process-exit", "Stop process request denied", "ip", ip)
+
+		return &lres, nil
 	} else {
 		audit.Log(nil, "process-exit", "Stop request encountered. Process is closing...")
 
