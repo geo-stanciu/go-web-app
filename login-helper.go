@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/geo-stanciu/go-utils/utils"
+	"github.com/gofrs/uuid"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
-	"github.com/satori/go.uuid"
 )
 
 // User - user

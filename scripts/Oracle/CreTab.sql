@@ -131,6 +131,7 @@ CREATE TABLE user_password (
     valid_from    timestamp     not null,
     valid_until   timestamp,
     temporary     number        DEFAULT 0 not null,
+    valid         number        DEFAULT 1 NOT NULL,
     constraint user_password_fk foreign key (user_id)
       references "user"(user_id)
 );
@@ -145,6 +146,7 @@ CREATE TABLE user_role (
     role_id      number not null,
     valid_from   timestamp not null,
     valid_until  timestamp,
+    valid        int DEFAULT 1 not null,
     constraint  user_role_fk foreign key (role_id)
         references role (role_id),
     constraint user_role_usr_fk foreign key (user_id)
@@ -160,6 +162,7 @@ CREATE TABLE user_role_history (
     role_id      number not null,
     valid_from   timestamp not null,
     valid_until  timestamp,
+    valid        int not null,
     constraint  user_role_history_fk foreign key (role_id)
         references role (role_id),
     constraint user_role_h_usr_fk foreign key (user_id)

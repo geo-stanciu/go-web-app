@@ -192,13 +192,15 @@ func (r *MembershipRole) HasMember(user string) (bool, error) {
 	          FROM user_role ur
 	          JOIN "user" u ON (ur.user_id = u.user_id)
 	         WHERE u.loweredusername =  lower(?)
-	           AND ur.role_id        =  ?
+			   AND ur.role_id        =  ?
+			   AND ur.valid          =  ?
 	           AND ur.valid_from     <= ?
 	           AND (ur.valid_until is null OR ur.valid_until > ?)
 	    ) THEN 1 ELSE 0 END
 	    FROM dual
 	`, user,
 		r.RoleID,
+		1,
 		dt,
 		dt)
 
@@ -224,13 +226,15 @@ func (r *MembershipRole) HasMemberID(userID int) (bool, error) {
 	        SELECT 1
 	          FROM user_role ur
 	         WHERE ur.user_id =  ?
-	           AND ur.role_id =  ?
+			   AND ur.role_id =  ?
+			   AND ur.valid   = ?
 	           AND ur.valid_from <= ?
 	           AND (ur.valid_until is null OR ur.valid_until > ?)
 	    ) THEN 1 ELSE 0 END
 	    FROM dual
 	`, userID,
 		r.RoleID,
+		1,
 		dt,
 		dt)
 
@@ -255,13 +259,15 @@ func IsUserInRole(user string, role string) (bool, error) {
 	          JOIN "user" u ON (ur.user_id = u.user_id)
 	          JOIN role r ON (ur.role_id = r.role_id)
 	         WHERE u.loweredusername =  lower(?)
-	           AND lower(r.role)     =  lower(?)
+			   AND lower(r.role)     =  lower(?)
+			   AND ur.valid          =  ?
 	           AND ur.valid_from     <= ?
 	           AND (ur.valid_until is null OR ur.valid_until > ?)
 	    ) THEN 1 ELSE 0 END
 	    FROM dual
 	`, user,
 		role,
+		1,
 		dt,
 		dt)
 

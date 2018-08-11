@@ -45,7 +45,7 @@ var (
 	hs                  *http.Server
 	stop                chan os.Signal
 	appName             = "GoWebsiteExample"
-	appVersion          = "0.0.0.3"
+	appVersion          = "0.0.0.4"
 	authCookieStoreName = strings.Replace(appName, " ", "", -1)
 	errCookieStoreName  = strings.Replace(appName, " ", "", -1) + "Err"
 	cookieStore         *sessions.CookieStore

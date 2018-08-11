@@ -249,17 +249,15 @@ func (HomeController) Register(w http.ResponseWriter, r *http.Request, res *Resp
 	}
 
 	u := MembershipUser{
-		tx: tx,
-		UserModel: models.UserModel{
-			UserID:          -1,
-			Username:        user,
-			Name:            name,
-			Surname:         surname,
-			Email:           email,
-			Password:        pass,
-			PasswordExpires: passwordExpires,
-			Valid:           true,
-		},
+		tx:              tx,
+		UserID:          -1,
+		Username:        user,
+		Name:            name,
+		Surname:         surname,
+		Email:           email,
+		Password:        pass,
+		PasswordExpires: passwordExpires,
+		Valid:           true,
 	}
 
 	err = u.Save()
@@ -337,8 +335,10 @@ func (HomeController) ChangePassword(w http.ResponseWriter, r *http.Request, res
 	}
 	defer tx.Rollback()
 
+	username := sessionData.User.Username
+
 	usr := MembershipUser{tx: tx}
-	err = usr.GetByName(sessionData.User.Username)
+	err = usr.GetByName(username)
 
 	if err != nil {
 		lres.BError = true
@@ -381,7 +381,7 @@ func (HomeController) ChangePassword(w http.ResponseWriter, r *http.Request, res
 
 	ip := getClientIP(r)
 
-	success, err := ValidateUserPassword(usr.Username, pass, ip)
+	success, err := ValidateUserPassword(username, pass, ip)
 
 	if success != ValidationOK && success != ValidationTemporaryPassword {
 		lres.BError = true

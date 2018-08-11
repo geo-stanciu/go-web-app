@@ -120,6 +120,7 @@ CREATE TABLE user_password (
   valid_from    datetime(3) NOT NULL,
   valid_until   datetime(3),
   temporary     INT          NOT NULL DEFAULT 0,
+  valid         INT          NOT NULL DEFAULT 1,
   constraint user_password_fk foreign key (user_id)
     references user(user_id)
 );
@@ -132,6 +133,7 @@ CREATE TABLE user_role (
   role_id      int not null,
   valid_from   datetime(3) not null,
   valid_until  datetime(3),
+  valid        int not null DEFAULT 1,
   constraint user_role_fk foreign key (role_id)
     references role(role_id),
   constraint user_role_usr_fk foreign key (user_id)
@@ -147,6 +149,7 @@ CREATE TABLE user_role_history (
   role_id      int not null,
   valid_from   datetime(3) not null,
   valid_until  datetime(3),
+  valid        int not null,
   constraint user_role_h_fk foreign key (role_id)
     references role(role_id),
   constraint user_role_h_usr_fk foreign key (user_id)

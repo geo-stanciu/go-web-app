@@ -86,6 +86,8 @@ func getResponseHelperByURL(sessionData *SessionData, url string, requestType st
 			 WHERE u.user_id = ur.user_id
 			   AND ur.role_id = rr.role_id
 			   AND u.loweredusername = lower(?)
+			   AND u.valid  = 1
+			   AND ur.valid = 1
 			UNION ALL
 			SELECT rr.request_id 
               FROM role r, request_role rr

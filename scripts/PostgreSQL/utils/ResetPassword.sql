@@ -17,10 +17,10 @@ begin
      where loweredusername = _user;
 
     update wmeter.user_password p
-	   set valid_until = current_timestamp
+	   set valid_until = (current_timestamp at time zone 'UTC'),
+           valid = 0
      where user_id = _user_id
-	   and p.valid_from <= current_timestamp
-	   and (p.valid_until is null OR p.valid_until > current_timestamp);
+	   and valid = 1;
 
     insert into wmeter.user_password (
         user_id,
@@ -32,11 +32,11 @@ begin
         _user_id,
         _password,
         _password_salt,
-        current_timestamp at time zone 'UTC'
+        (current_timestamp at time zone 'UTC')
     );
 
     UPDATE wmeter.user
-       SET last_password_change = current_timestamp,
+       SET last_password_change = (current_timestamp at time zone 'UTC'),
            locked_out = 0,
            failed_password_atmpts = 0
      WHERE user_id = _user_id;

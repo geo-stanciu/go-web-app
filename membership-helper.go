@@ -8,12 +8,10 @@ import (
 	"time"
 	"unicode"
 
-	"./models"
-
 	"strings"
 
 	"github.com/geo-stanciu/go-utils/utils"
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -29,8 +27,19 @@ const (
 // MembershipUser - membership user helper
 type MembershipUser struct {
 	sync.RWMutex
-	tx *sql.Tx
-	models.UserModel
+	tx              *sql.Tx
+	UserID          int       `sql:"user_id"`
+	Username        string    `sql:"username"`
+	Name            string    `sql:"name"`
+	Surname         string    `sql:"surname"`
+	Email           string    `sql:"email"`
+	PasswordExpires bool      `sql:"password_expires" json:"password_expires"`
+	CreationTime    time.Time `sql:"creation_time" json:"creation_time"`
+	LastUpdate      time.Time `sql:"last_update" json:"last_update"`
+	Activated       bool      `sql:"activated" json:"activated"`
+	LockedOut       bool      `sql:"locked_out" json:"locked_out"`
+	Valid           bool      `sql:"valid" json:"valid"`
+	Password        string    `json:"-"`
 }
 
 var membershipUserLock sync.RWMutex
@@ -316,8 +325,10 @@ func (u *MembershipUser) SetUnlimited() error {
 				 FROM user_password
 				WHERE user_id = ?
 		      )
+		   AND valid = ? 
 		   AND valid_until IS NOT NULL
-	`, u.UserID)
+	`, u.UserID,
+		1)
 
 	_, err := dbutl.ExecTx(u.tx, pq)
 	if err != nil {
@@ -353,11 +364,13 @@ func (u *MembershipUser) GetUserRoles() ([]*MembershipRole, error) {
 	           r.role
 	      FROM user_role ur
 	      JOIN role r ON (ur.role_id = r.role_id)
-	     WHERE ur.user_id = ?
+		 WHERE ur.user_id = ?
+		   AND ur.valid   = ?
 	       AND ur.valid_from <= ?
 	       AND (ur.valid_until is null OR ur.valid_until > ?)
 	     ORDER BY r.role
 	`, u.UserID,
+		1,
 		dt,
 		dt)
 
@@ -447,10 +460,12 @@ func (u *MembershipUser) RemoveFromRole(role string) error {
 
 	pq := dbutl.PQuery(`
 	    UPDATE user_role
-	       SET valid_until = ?
+		   SET valid_until = ?,
+		       valid = ?
 	     WHERE user_id = ?
 	       AND role_id = ?
 	`, dt,
+		0,
 		u.UserID,
 		r.RoleID)
 
@@ -522,20 +537,24 @@ func (u *MembershipUser) passwordAlreadyUsed() (bool, int, error) {
 
 	var err error
 	err = dbutl.ForEachRowTx(u.tx, pq, func(row *sql.Rows, sc *utils.SQLScan) error {
-		err = row.Scan(&hashedPassword, &passwordSalt)
-		if err != nil {
-			return err
+		var err1 = row.Scan(&hashedPassword, &passwordSalt)
+		if err1 != nil {
+			return err1
 		}
 
 		passBytes := []byte(passwordSalt + u.Password)
-		hashBytes, err := base64.StdEncoding.DecodeString(hashedPassword)
-		if err != nil {
-			return err
+		hashBytes, err1 := base64.StdEncoding.DecodeString(hashedPassword)
+		if err1 != nil {
+			return err1
 		}
 
-		err = bcrypt.CompareHashAndPassword(hashBytes, passBytes)
+		err1 = bcrypt.CompareHashAndPassword(hashBytes, passBytes)
 
-		return err
+		if err1 == nil {
+			return fmt.Errorf("Password already used")
+		}
+
+		return nil
 	})
 
 	if err != nil {
@@ -633,14 +652,14 @@ func (u *MembershipUser) changePassword() error {
 
 	pq := dbutl.PQuery(`
 	    UPDATE user_password
-	       SET valid_until = ?
+		   SET valid_until = ?,
+		       valid = ?
 	     WHERE user_id = ?
-	       AND valid_from <= ?
-	       AND (valid_until is null OR valid_until > ?)
+	       AND valid = ?
 	`, dt,
+		0,
 		u.UserID,
-		dt,
-		dt)
+		1)
 
 	_, err = dbutl.ExecTx(u.tx, pq)
 	if err != nil {
@@ -749,14 +768,16 @@ func ValidateUserPassword(user string, pass string, ip string) (int, error) {
 	           END AS password_salt,
 	           activated,
 	           locked_out,
-	           valid,
+	           u.valid,
 	           p.temporary
 	      FROM "user" u
 	      LEFT OUTER JOIN user_password p ON (u.user_id = p.user_id)
-	     WHERE loweredusername = lower(?)
+		 WHERE loweredusername = lower(?)
+		   AND p.valid = ?
 	       AND p.valid_from <= ?
 	       AND (p.valid_until is null OR p.valid_until > ?)
 	`, user,
+		1,
 		dt,
 		dt)
 
@@ -954,14 +975,14 @@ func failedUserPasswordValidation(userID int, user string) {
 
 		pq = dbutl.PQuery(`
 		    UPDATE user_password
-		       SET valid_until = ?
+			   SET valid_until = ?,
+			       valid = ?
 		     WHERE user_id = ?
-		       AND valid_from <= ?
-		       AND (valid_until is null OR valid_until > ?)
+		       AND valid = ?
 		`, dt,
+			0,
 			userID,
-			dt,
-			dt)
+			1)
 
 		_, err = dbutl.ExecTx(tx, pq)
 		if err != nil {
