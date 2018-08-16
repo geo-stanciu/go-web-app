@@ -64,7 +64,7 @@ Check out the **Scripts** folder for the initialization scripts.
 ```xml
 <database>
   <db-type>mysql</db-type>
-  <db-url>geo:geo@tcp(localhost:3306)/devel?parseTime=true&amp;sql_mode=%27ORACLE,TRADITIONAL%27</db-url>
+  <db-url>geo:geo@tcp(localhost:3306)/devel?parseTime=true&amp;collation=utf8mb4_unicode_ci&amp;sql_mode=%27ORACLE,TRADITIONAL%27</db-url>
 </database>
 ```
 
