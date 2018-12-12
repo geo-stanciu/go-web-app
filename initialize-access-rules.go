@@ -113,6 +113,7 @@ func addChildRequestAccessRules(tx *sql.Tx) (bool, error) {
 		  FROM request_role rr
 		  JOIN role r ON (rr.role_id = r.role_id)
 		  JOIN child c ON (rr.request_id = c.parent_id)
+		 ORDER BY rr.request_id
 	`)
 
 	var access []*accessRule
@@ -141,7 +142,7 @@ func addChildRequestAccessRules(tx *sql.Tx) (bool, error) {
 }
 
 func setAccessRules(tx *sql.Tx, reqType string, menus []*menu) (bool, error) {
-	var found bool
+	found := 0
 	var requestID int32
 	var err error
 
@@ -217,7 +218,7 @@ func setAccessRules(tx *sql.Tx, reqType string, menus []*menu) (bool, error) {
 					return false, err
 				}
 
-				if found {
+				if found == 1 {
 					continue
 				}
 
@@ -254,7 +255,7 @@ func setAccessRules(tx *sql.Tx, reqType string, menus []*menu) (bool, error) {
 
 func addRequest2Role(tx *sql.Tx, requestID int32, role string) (bool, error) {
 	var roleID int32
-	var found bool
+	found := 0
 
 	pq := dbutl.PQuery(`
 		SELECT role_id
@@ -282,7 +283,7 @@ func addRequest2Role(tx *sql.Tx, requestID int32, role string) (bool, error) {
 		return false, err
 	}
 
-	if found {
+	if found == 1 {
 		return false, nil
 	}
 

@@ -37,11 +37,11 @@ func (HomeController) StopProcess(w http.ResponseWriter, r *http.Request, res *R
 		audit.Log(err1, "process-exit", "Stop process request denied", "ip", ip)
 
 		return &lres, nil
-	} else {
-		audit.Log(nil, "process-exit", "Stop request encountered. Process is closing...")
-
-		lres.SError = "OK"
 	}
+
+	audit.Log(nil, "process-exit", "Stop request encountered. Process is closing...")
+
+	lres.SError = "OK"
 
 	// exit
 	stop <- os.Interrupt
@@ -442,8 +442,8 @@ func (HomeController) Users(w http.ResponseWriter, r *http.Request, res *Respons
 	lpage := utils.String2int(spage)
 	lrowsonpage := utils.String2int(srowsonpage)
 
-	if lrowsonpage < 0 {
-		lrowsonpage = 0
+	if lrowsonpage <= 0 {
+		lrowsonpage = 10
 	}
 
 	lmin := 0

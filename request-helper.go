@@ -37,7 +37,7 @@ var requestLock sync.RWMutex
 // Exists - check to see if request already exists
 func (r *RequestHelper) Exists() (bool, error) {
 	var err error
-	var found bool
+	found := 0
 
 	pq := dbutl.PQuery(`
 		select CASE WHEN EXISTS (
@@ -55,7 +55,11 @@ func (r *RequestHelper) Exists() (bool, error) {
 		return false, err
 	}
 
-	return found, nil
+	if found == 0 {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 // GetByURL - get user by url
@@ -147,7 +151,7 @@ func (r *RequestHelper) testSave() error {
 		return fmt.Errorf("unknown request \"%s\"", r.RequestURL)
 	}
 
-	var found bool
+	found := 0
 
 	pq := dbutl.PQuery(`
 	    SELECT CASE WHEN EXISTS (
@@ -167,7 +171,7 @@ func (r *RequestHelper) testSave() error {
 		return err
 	}
 
-	if found {
+	if found == 1 {
 		return fmt.Errorf("duplicate request \"%s:%s\"", r.RequestType, r.RequestURL)
 	}
 

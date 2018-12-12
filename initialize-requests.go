@@ -112,6 +112,16 @@ func addRequests(tx *sql.Tx) (bool, error) {
 			RedirectOnError: "-",
 			FireEvent:       1,
 		},
+		{
+			RequestType:     "GET",
+			RequestURL:      "list-users",
+			RequestTemplate: "-",
+			Controller:      "Home",
+			Action:          "GetExchangeRates",
+			RedirectURL:     "-",
+			RedirectOnError: "-",
+			FireEvent:       1,
+		},
 		// posts
 		{
 			RequestType:     "POST",

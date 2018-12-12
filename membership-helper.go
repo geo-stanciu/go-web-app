@@ -46,7 +46,7 @@ var membershipUserLock sync.RWMutex
 
 // Exists - user exists
 func (u *MembershipUser) Exists(user string) (bool, error) {
-	found := false
+	found := 0
 
 	pq := dbutl.PQuery(`
 	    SELECT CASE WHEN EXISTS (
@@ -62,7 +62,10 @@ func (u *MembershipUser) Exists(user string) (bool, error) {
 		return false, err
 	}
 
-	return found, nil
+	if found == 0 {
+		return false, nil
+	}
+	return true, nil
 }
 
 // GetByName - get user by name
@@ -151,13 +154,13 @@ func (u *MembershipUser) testSave() error {
 	`, u.Username,
 		u.UserID)
 
-	var found bool
+	found := 0
 	err := u.tx.QueryRow(pq.Query, pq.Args...).Scan(&found)
 	if err != nil {
 		return err
 	}
 
-	if found {
+	if found == 1 {
 		return fmt.Errorf("duplicate user \"%s\"", u.Username)
 	}
 

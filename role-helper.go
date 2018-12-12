@@ -19,7 +19,7 @@ var membershipRoleLock sync.RWMutex
 
 // Exists - role exists
 func (r *MembershipRole) Exists() (bool, error) {
-	found := false
+	found := 0
 
 	pq := dbutl.PQuery(`
 	    SELECT CASE WHEN EXISTS (
@@ -35,7 +35,11 @@ func (r *MembershipRole) Exists() (bool, error) {
 		return false, err
 	}
 
-	return found, nil
+	if found == 0 {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 // GetByName - get role by name
@@ -91,7 +95,7 @@ func (r *MembershipRole) testSave() error {
 		return fmt.Errorf("unknown role \"%s\"", r.Rolename)
 	}
 
-	var found bool
+	found := 0
 
 	pq := dbutl.PQuery(`
 	    SELECT CASE WHEN EXISTS (
@@ -109,7 +113,7 @@ func (r *MembershipRole) testSave() error {
 		return err
 	}
 
-	if found {
+	if found == 1 {
 		return fmt.Errorf("duplicate role \"%s\"", r.Rolename)
 	}
 
@@ -182,7 +186,7 @@ func (r *MembershipRole) HasMember(user string) (bool, error) {
 	r.RLock()
 	defer r.RUnlock()
 
-	found := false
+	found := 0
 
 	dt := time.Now().UTC()
 
@@ -209,7 +213,11 @@ func (r *MembershipRole) HasMember(user string) (bool, error) {
 		return false, err
 	}
 
-	return found, nil
+	if found == 0 {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 // HasMemberID - has member ID
@@ -217,7 +225,7 @@ func (r *MembershipRole) HasMemberID(userID int) (bool, error) {
 	r.RLock()
 	defer r.RUnlock()
 
-	found := false
+	found := 0
 
 	dt := time.Now().UTC()
 
@@ -243,13 +251,16 @@ func (r *MembershipRole) HasMemberID(userID int) (bool, error) {
 		return false, err
 	}
 
-	return found, nil
+	if found == 0 {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 // IsUserInRole - Is user in role
 func IsUserInRole(user string, role string) (bool, error) {
-	found := false
-
+	found := 0
 	dt := time.Now().UTC()
 
 	pq := dbutl.PQuery(`
@@ -276,5 +287,9 @@ func IsUserInRole(user string, role string) (bool, error) {
 		return false, err
 	}
 
-	return found, nil
+	if found == 0 {
+		return false, nil
+	}
+
+	return true, nil
 }

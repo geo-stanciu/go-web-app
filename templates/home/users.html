@@ -6,3 +6,9 @@
 <a href="/users">users</a>
 <a href="/about">about</a>
 <a href="/change-password">Change Password</a>
+<br><br>
+<div class="userlist">
+    {{% range .m.Model.UserModel %}}
+    <div>Hello, {{% .Name %}} {{% .Surname %}}</div>
+    {{% end %}}
+</div>

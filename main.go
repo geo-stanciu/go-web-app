@@ -45,7 +45,7 @@ var (
 	hs                  *http.Server
 	stop                chan os.Signal
 	appName             = "GoWebsiteExample"
-	appVersion          = "0.0.0.4"
+	appVersion          = "0.0.0.5"
 	authCookieStoreName = strings.Replace(appName, " ", "", -1)
 	errCookieStoreName  = strings.Replace(appName, " ", "", -1) + "Err"
 	cookieStore         *sessions.CookieStore
@@ -125,18 +125,19 @@ func main() {
 
 	cookieStore, err = getNewCookieStore()
 	if err != nil {
-		log.Println(err)
+		audit.Log(err, "get cookie store", "error while initializing the cookie store")
 		return
 	}
 
 	err = parseArguments()
 	if err != nil {
+		audit.Log(err, "parse arguments", "error while parsing the command line arguments")
 		return
 	}
 
 	err = initializeDatabase()
 	if err != nil {
-		log.Println(err)
+		audit.Log(err, "initialize database", "error while initializing the database")
 		return
 	}
 

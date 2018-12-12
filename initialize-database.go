@@ -10,46 +10,28 @@ func initializeDatabase() error {
 	}
 	defer tx.Rollback()
 
-	if foundNew, err = addRequests(tx); foundNew {
+	if foundNew, err = addRequests(tx); foundNew || err != nil {
 		audit.Log(err, "initialize", "requests")
 	}
-	if err != nil {
-		return err
-	}
 
-	if foundNew, err = addRoles(tx); foundNew {
+	if foundNew, err = addRoles(tx); foundNew || err != nil {
 		audit.Log(err, "initialize", "roles")
 	}
-	if err != nil {
-		return err
-	}
 
-	if foundNew, err = addGetRequestsAccessRules(tx); foundNew {
+	if foundNew, err = addGetRequestsAccessRules(tx); foundNew || err != nil {
 		audit.Log(err, "initialize", "access rules - GET")
 	}
-	if err != nil {
-		return err
-	}
 
-	if foundNew, err = addPostRequestsAccessRules(tx); foundNew {
+	if foundNew, err = addPostRequestsAccessRules(tx); foundNew || err != nil {
 		audit.Log(err, "initialize", "access rules - POST")
 	}
-	if err != nil {
-		return err
-	}
 
-	if foundNew, err = addGeneralMemberRequestsAccessRules(tx); foundNew {
+	if foundNew, err = addGeneralMemberRequestsAccessRules(tx); foundNew || err != nil {
 		audit.Log(err, "initialize", "access rules - members")
 	}
-	if err != nil {
-		return err
-	}
 
-	if foundNew, err = addChildRequestAccessRules(tx); foundNew {
+	if foundNew, err = addChildRequestAccessRules(tx); foundNew || err != nil {
 		audit.Log(err, "initialize", "access rules - child requests")
-	}
-	if err != nil {
-		return err
 	}
 
 	tx.Commit()
